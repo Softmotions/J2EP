@@ -16,10 +16,9 @@
 
 package net.sf.j2ep.responsehandlers;
 
-import javax.servlet.http.HttpServletResponse;
-
-
 import org.apache.commons.httpclient.methods.HeadMethod;
+
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * Handler for the HEAD method.
@@ -27,11 +26,11 @@ import org.apache.commons.httpclient.methods.HeadMethod;
  * @author Anders Nyman
  */
 public class HeadResponseHandler extends ResponseHandlerBase {
-    
+
     /**
      * Default constructor, will only call the super-constructor
-     * for BasicResponseHandler. 
-     * 
+     * for BasicResponseHandler.
+     *
      * @param method The method used for this response
      */
     public HeadResponseHandler(HeadMethod method) {
@@ -40,7 +39,7 @@ public class HeadResponseHandler extends ResponseHandlerBase {
 
     /**
      * Will only set the headers and status code, no response is sent.
-     * 
+     *
      * @see net.sf.j2ep.model.ResponseHandler#process(javax.servlet.http.HttpServletResponse)
      */
     public void process(HttpServletResponse response) {

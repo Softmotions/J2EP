@@ -16,12 +16,10 @@
 
 package net.sf.j2ep.responsehandlers;
 
-import java.io.IOException;
+import org.apache.commons.httpclient.HttpMethod;
 
 import javax.servlet.http.HttpServletResponse;
-
-
-import org.apache.commons.httpclient.HttpMethod;
+import java.io.IOException;
 
 /**
  * A simple ResponseHandler used for all those times

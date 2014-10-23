@@ -16,21 +16,19 @@
 
 package net.sf.j2ep.responsehandlers;
 
+import net.sf.j2ep.model.ResponseHandler;
+import net.sf.j2ep.requesthandlers.RequestHandlerBase;
+import org.apache.commons.httpclient.Header;
+import org.apache.commons.httpclient.HttpMethod;
+import org.slf4j.LoggerFactory;
+
+import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletResponse;
-
-import net.sf.j2ep.model.ResponseHandler;
-import net.sf.j2ep.requesthandlers.RequestHandlerBase;
-
-import org.apache.commons.httpclient.Header;
-import org.apache.commons.httpclient.HttpMethod;
-import org.apache.commons.logging.LogFactory;
 
 /**
  * Basic implementation of a Response Handler. This class
@@ -131,7 +129,7 @@ public abstract class ResponseHandlerBase implements ResponseHandler{
         try {
             serverHostName = InetAddress.getLocalHost().getHostName();   
         } catch (UnknownHostException e) {
-            LogFactory.getLog(RequestHandlerBase.class).error("Couldn't get the hostname needed for header Via", e);
+            LoggerFactory.getLogger(RequestHandlerBase.class).error("Couldn't get the hostname needed for header Via", e);
         }
         
         Header originalVia = method.getResponseHeader("via");

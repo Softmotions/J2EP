@@ -16,88 +16,86 @@
 
 package net.sf.j2ep;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import net.sf.j2ep.model.Server;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpServletResponseWrapper;
-
-import net.sf.j2ep.model.Server;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * A wrapper for the normal HttpServletResponse, based
  * on the content-type either the normal output stream
  * of a wrapped stream will be returned. The wrapped stream
  * can handle rewrite of links found in the source.
- * 
+ * <p/>
  * This class also handles rewriting of the headers Location
  * and Set-Cookie.
  *
  * @author Anders Nyman, Daniel Deng
  */
-public final class UrlRewritingResponseWrapper extends HttpServletResponseWrapper{
-    
-    /** 
+public final class UrlRewritingResponseWrapper extends HttpServletResponseWrapper {
+
+    /**
      * Stream we are using for the response.
      */
     private UrlRewritingOutputStream outStream;
-    
-    /** 
+
+    /**
      * Writer we are using for the response.
      */
     private PrintWriter outWriter;
-    
-    /** 
+
+    /**
      * Writer that writes to the underlying stream.
      */
     private PrintWriter originalWriter;
-    
-    /** 
+
+    /**
      * Server used for this page
      */
     private Server server;
-    
-    /** 
+
+    /**
      * The location for this server, used when we rewrite absolute URIs
      */
     private String ownHostName;
-    
-    /** 
+
+    /**
      * The contextPath, needed when we rewrite links.
      */
     private String contextPath;
-    
-    /** 
+
+    /**
      * The servers.
      */
     private ServerChain serverChain;
-    
-    /** 
+
+    /**
      * Regex to find absolute links.
      */
     private static Pattern linkPattern = Pattern.compile("\\b([^/]+://)([^/]+)([\\w/]*)", Pattern.CASE_INSENSITIVE | Pattern.CANON_EQ);
-    
-    /** 
+
+    /**
      * Regex to find the path in Set-Cookie headers.
      */
     private static Pattern pathAndDomainPattern = Pattern.compile("\\b(path=|domain=)([^;\\s]+);?", Pattern.CASE_INSENSITIVE | Pattern.CANON_EQ);
 
-    /** 
+    /**
      * Logging element supplied by commons-logging.
      */
-    private static Log log;
-    
+    private static Logger log;
+
     /**
      * Basic constructor.
-     * 
-     * @param response The response we are wrapping
-     * @param server The server that was matched
+     *
+     * @param response    The response we are wrapping
+     * @param server      The server that was matched
      * @param ownHostName String we are rewriting servers to
      * @throws IOException When there is a problem with the streams
      */
@@ -107,17 +105,17 @@ public final class UrlRewritingResponseWrapper extends HttpServletResponseWrappe
         this.ownHostName = ownHostName;
         this.contextPath = contextPath;
         this.serverChain = serverChain;
-        
-        log = LogFactory.getLog(UrlRewritingResponseWrapper.class);        
+
+        log = LoggerFactory.getLogger(UrlRewritingResponseWrapper.class);
         outStream = new UrlRewritingOutputStream(response.getOutputStream(), ownHostName, contextPath, serverChain);
         outWriter = new PrintWriter(outStream);
         originalWriter = new PrintWriter(response.getOutputStream());
     }
-    
+
     /**
      * Checks if we have to rewrite the header and
      * if so will rewrite it.
-     * 
+     *
      * @see javax.servlet.http.HttpServletResponse#addHeader(java.lang.String, java.lang.String)
      */
     public void addHeader(String name, String originalValue) {
@@ -131,11 +129,11 @@ public final class UrlRewritingResponseWrapper extends HttpServletResponseWrappe
         }
         super.addHeader(name, value);
     }
-    
+
     /**
      * Checks if we have to rewrite the header and
      * if so will rewrite it.
-     * 
+     *
      * @see javax.servlet.http.HttpServletResponse#setHeader(java.lang.String, java.lang.String)
      */
     public void setHeader(String name, String originalValue) {
@@ -144,18 +142,17 @@ public final class UrlRewritingResponseWrapper extends HttpServletResponseWrappe
             value = rewriteLocation(originalValue);
         } else if (name.equalsIgnoreCase("set-cookie")) {
             value = rewriteSetCookie(originalValue);
-        }
-        else {
+        } else {
             value = originalValue;
         }
         super.setHeader(name, value);
     }
 
-    
+
     /**
      * Rewrites the location header.
      * Will first locate any links in the header and then rewrite them.
-     * 
+     *
      * @param value The header value we are to rewrite
      * @return A rewritten header
      */
@@ -164,7 +161,7 @@ public final class UrlRewritingResponseWrapper extends HttpServletResponseWrappe
 
         Matcher matcher = linkPattern.matcher(value);
         while (matcher.find()) {
-            
+
             String link = matcher.group(3).replaceAll("\\$", "\\\\$");
             if (link.length() == 0) {
                 link = "/";
@@ -179,14 +176,14 @@ public final class UrlRewritingResponseWrapper extends HttpServletResponseWrappe
             }
         }
         matcher.appendTail(header);
-        log.debug("Location header rewritten " + value + " >> " + header.toString());
+        if (log.isDebugEnabled()) log.debug("Location header rewritten " + value + " >> " + header.toString());
         return header.toString();
     }
-    
+
     /**
-     * Rewrites the header Set-Cookie so that path and domain 
+     * Rewrites the header Set-Cookie so that path and domain
      * is correct.
-     * 
+     *
      * @param value The original header
      * @return The rewritten header
      */
@@ -197,22 +194,22 @@ public final class UrlRewritingResponseWrapper extends HttpServletResponseWrappe
         while (matcher.find()) {
             if (matcher.group(1).equalsIgnoreCase("path=")) {
                 String path = server.getRule().revert(matcher.group(2));
-                matcher.appendReplacement(header, "$1" + path + ";"); 
+                matcher.appendReplacement(header, "$1" + path + ";");
             } else {
                 matcher.appendReplacement(header, "");
             }
-            
+
         }
         matcher.appendTail(header);
-        log.debug("Set-Cookie header rewritten \"" + value + "\" >> " + header.toString());
+        if (log.isDebugEnabled()) log.debug("Set-Cookie header rewritten \"" + value + "\" >> " + header.toString());
         return header.toString();
     }
-    
+
     /**
      * Based on the value in the content-type header we either
      * return the default stream or our own stream that can rewrite
      * links.
-     * 
+     *
      * @see javax.servlet.ServletResponse#getOutputStream()
      */
     public ServletOutputStream getOutputStream() throws IOException {
@@ -222,12 +219,12 @@ public final class UrlRewritingResponseWrapper extends HttpServletResponseWrappe
             return super.getOutputStream();
         }
     }
-    
+
     /**
      * Based on the value in the content-type header we either
      * return the default writer or our own writer. Our own
      * writer will write to the stream that can rewrite links.
-     * 
+     *
      * @see javax.servlet.ServletResponse#getWriter()
      */
     public PrintWriter getWriter() throws IOException {
@@ -237,13 +234,13 @@ public final class UrlRewritingResponseWrapper extends HttpServletResponseWrappe
             return originalWriter;
         }
     }
-    
+
     /**
-     * Rewrites the output stream to change any links. Also closes all the 
+     * Rewrites the output stream to change any links. Also closes all the
      * streams and writers. We need the user to flush and close the streams himself
      * as usual but we can't be sure that the writers created are used by the client
      * and therefor we close them here.
-     * 
+     *
      * @throws IOException Is thrown when there is a problem with the streams
      */
     public void processStream() throws IOException {
@@ -256,11 +253,11 @@ public final class UrlRewritingResponseWrapper extends HttpServletResponseWrappe
         originalWriter.close();
         outWriter.close();
     }
-    
+
     /**
-     * Checks the contentType to evaluate if we should do 
+     * Checks the contentType to evaluate if we should do
      * link rewriting for this content.
-     * 
+     *
      * @param contentType The Content-Type header
      * @return true if we need to rewrite links, false otherwise
      */

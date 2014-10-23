@@ -16,37 +16,37 @@
 
 package net.sf.j2ep.servers;
 
+import net.sf.j2ep.model.Server;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import net.sf.j2ep.model.Server;
 
 /**
  * A basic implementation of the Server interface using a single host name to map
  * all connections. Can be easily extended to create a server that gets it host
  * name in some other way. For instance a server fetching the host name from the
  * request could be made to change the proxy into a forwarding proxy.
- * 
+ *
  * @author Anders Nyman, Daniel Deng
  */
 public class BaseServer extends ServerContainerBase implements Server {
- 
-    /** 
+
+    /**
      * Marks if this rule server will do any
      * rewriting of links.
      */
     private boolean isRewriting;
-    
+
     /**
      * The host and port for this server
      */
     private String domainName;
-    
+
     /**
      * The path for this server
      */
     private String path;
-    
+
     /**
      * Basic constructor that will initialize
      * the directory to "".
@@ -54,8 +54,8 @@ public class BaseServer extends ServerContainerBase implements Server {
     public BaseServer() {
         path = "";
         isRewriting = false;
-    }   
-    
+    }
+
     /**
      * @see net.sf.j2ep.model.ServerContainer#getServer(javax.servlet.http.HttpServletRequest)
      */
@@ -65,27 +65,29 @@ public class BaseServer extends ServerContainerBase implements Server {
 
     /**
      * Will no do any handling
+     *
      * @see net.sf.j2ep.model.Server#preExecute(javax.servlet.http.HttpServletRequest)
      */
     public HttpServletRequest preExecute(HttpServletRequest request) {
         return request;
     }
-    
+
     /**
      * Will no do any handling
+     *
      * @see net.sf.j2ep.model.Server#postExecute(javax.servlet.http.HttpServletResponse)
      */
     public HttpServletResponse postExecute(HttpServletResponse response) {
         return response;
     }
-    
+
     /**
      * @see net.sf.j2ep.model.Server#getDomainName()
      */
     public String getDomainName() {
         return domainName;
     }
-    
+
     /**
      * @see net.sf.j2ep.model.Server#getPath()
      */
@@ -104,22 +106,22 @@ public class BaseServer extends ServerContainerBase implements Server {
             return null;
         }
     }
-    
+
     /**
      * Set if this server wants absolute links mapped
      * for this server to be rewritten.
-     * 
+     *
      * @param rewrite Should be true if we want to do rewriting
      */
     public void setIsRewriting(String rewrite) {
         if (rewrite != null && rewrite.equals("true")) {
             isRewriting = true;
         }
-    }   
-    
+    }
+
     /**
      * Sets the host and port we are mapping to.
-     * 
+     *
      * @param domainName Value to set
      */
     public void setDomainName(String domainName) {
@@ -130,9 +132,10 @@ public class BaseServer extends ServerContainerBase implements Server {
             this.domainName = domainName;
         }
     }
-    
+
     /**
      * Sets the path we are mapping to.
+     *
      * @param path The path
      */
     public void setPath(String path) {

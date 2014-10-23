@@ -16,22 +16,21 @@
 
 package net.sf.j2ep;
 
+import net.sf.j2ep.model.ServerContainer;
+import org.apache.commons.digester3.Digester;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.util.LinkedList;
-
-import net.sf.j2ep.model.ServerContainer;
-
-import org.apache.commons.digester3.Digester;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 /**
  * The config parser uses Digester to parse the config file. A rule chain with
  * links to the servers will be constructed.
- * 
+ * <p/>
  * Based on the work by Yoav Shapira for the balancer webapp distributed with
  * Tomcat.
- * 
+ *
  * @author Anders Nyman, Yoav Shapira, Daniel Deng
  */
 public class ConfigParser {
@@ -44,22 +43,21 @@ public class ConfigParser {
     /**
      * A logging instance supplied by commons-logging.
      */
-    private static Log log;
+    private static Logger log;
 
     /**
      * Standard constructor only specifying the input file. The constructor will
      * parse the config and build a corresponding rule chain with the server
      * mappings included.
-     * 
-     * @param data
-     *            The config file containing the XML data structure.
+     *
+     * @param data The config file containing the XML data structure.
      */
     public ConfigParser(File data) {
-        log = LogFactory.getLog(ConfigParser.class);
+        log = LoggerFactory.getLogger(ConfigParser.class);
         try {
             LinkedList serverContainer = createServerList(data);
             if (log.isDebugEnabled()) {
-                debugServers(serverContainer); 
+                debugServers(serverContainer);
             }
             serverChain = new ServerChain(serverContainer);
         } catch (Exception e) {
@@ -69,7 +67,7 @@ public class ConfigParser {
 
     /**
      * Returns the parsed server chain.
-     * 
+     *
      * @return The resulting ServerChain
      */
     public ServerChain getServerChain() {
@@ -78,7 +76,7 @@ public class ConfigParser {
 
     /**
      * Creates the rules.
-     * 
+     *
      * @return The rules all put into a rule chain
      */
     private LinkedList createServerList(File data) throws Exception {
@@ -97,10 +95,10 @@ public class ConfigParser {
         digester.addSetNext("config/server/rule", "setRule");
         // Create composite rule
         digester.addObjectCreate("config/server/composite-rule", null,
-                "className");
+                                 "className");
         digester.addSetProperties("config/server/composite-rule");
         digester.addObjectCreate("config/server/composite-rule/rule", null,
-                "className");
+                                 "className");
         digester.addSetProperties("config/server/composite-rule/rule");
         digester.addSetNext("config/server/composite-rule/rule", "addRule");
         digester.addSetNext("config/server/composite-rule", "setRule");
@@ -116,18 +114,18 @@ public class ConfigParser {
         digester.addCallParam("config/cluster-server/server", 1, "path");
         // Create rule
         digester.addObjectCreate("config/cluster-server/rule", null,
-                "className");
+                                 "className");
         digester.addSetProperties("config/cluster-server/rule");
         digester.addSetNext("config/cluster-server/rule", "setRule");
         // Create composite rule
         digester.addObjectCreate("config/cluster-server/composite-rule", null,
-                "className");
+                                 "className");
         digester.addSetProperties("config/cluster-server/composite-rule");
         digester.addObjectCreate("config/cluster-server/composite-rule/rule",
-                null, "className");
+                                 null, "className");
         digester.addSetProperties("config/cluster-server/composite-rule/rule");
         digester.addSetNext("config/cluster-server/composite-rule/rule",
-                "addRule");
+                            "addRule");
         digester.addSetNext("config/cluster-server/composite-rule", "setRule");
 
         // Add server to list
@@ -139,14 +137,14 @@ public class ConfigParser {
     /**
      * Will iterate over the server and print out the mappings between servers
      * and rules.
-     * 
+     *
      * @param servers The server to debug
      */
     private void debugServers(LinkedList servers) {
 
         for (Object server : servers) {
             ServerContainer container = (ServerContainer) server;
-            log.debug(container + " mapped to --> " + container.getRule());
+            if (log.isDebugEnabled()) log.debug(container + " mapped to --> " + container.getRule());
         }
     }
 }

@@ -1,16 +1,14 @@
 package net.sf.j2ep.test;
 
-import java.io.IOException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-
-import javax.servlet.ServletException;
-
 import net.sf.j2ep.ProxyFilter;
-
 import org.apache.cactus.FilterTestCase;
 import org.apache.cactus.WebRequest;
 import org.apache.cactus.WebResponse;
+
+import javax.servlet.ServletException;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 public class TraceTest extends FilterTestCase {
 
@@ -20,7 +18,7 @@ public class TraceTest extends FilterTestCase {
         proxyFilter = new ProxyFilter();
 
         config.setInitParameter("dataUrl",
-                "/WEB-INF/classes/net/sf/j2ep/test/testData.xml");
+                                "/WEB-INF/classes/net/sf/j2ep/test/testData.xml");
         try {
             proxyFilter.init(config);
         } catch (ServletException e) {
@@ -50,10 +48,10 @@ public class TraceTest extends FilterTestCase {
         assertEquals("Checking content-type", "message/http", contentType);
 
         String expectedVia = "HTTP/1.0 fakeserver.com, " + "HTTP/1.1 " + serverHostName;
-        assertTrue("Checking that the via header is included", theResponse.getText().indexOf(expectedVia)>-1);
+        assertTrue("Checking that the via header is included", theResponse.getText().indexOf(expectedVia) > -1);
 
         String expectedUserAgent = "Jakarta Commons-HttpClient/3.0-rc3";
-        assertTrue("Checking that user-agent is included", theResponse.getText().indexOf(expectedUserAgent)>-1);
+        assertTrue("Checking that user-agent is included", theResponse.getText().indexOf(expectedUserAgent) > -1);
     }
 
     public void beginMaxForwards(WebRequest theRequest) {
@@ -76,6 +74,6 @@ public class TraceTest extends FilterTestCase {
         assertEquals("Checking content-type", "message/http", contentType);
 
         String expectedVia = "HTTP/1.0 fakeserver.com";
-        assertTrue("Checking that the via header is included", theResponse.getText().indexOf(expectedVia)>-1);
+        assertTrue("Checking that the via header is included", theResponse.getText().indexOf(expectedVia) > -1);
     }
 }

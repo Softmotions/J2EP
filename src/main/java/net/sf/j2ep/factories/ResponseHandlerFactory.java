@@ -18,10 +18,21 @@ package net.sf.j2ep.factories;
 
 import net.sf.j2ep.model.AllowedMethodHandler;
 import net.sf.j2ep.model.ResponseHandler;
-import net.sf.j2ep.responsehandlers.*;
-
+import net.sf.j2ep.responsehandlers.DeleteResponseHandler;
+import net.sf.j2ep.responsehandlers.GetResponseHandler;
+import net.sf.j2ep.responsehandlers.HeadResponseHandler;
+import net.sf.j2ep.responsehandlers.OptionsResponseHandler;
+import net.sf.j2ep.responsehandlers.PostResponseHandler;
+import net.sf.j2ep.responsehandlers.PutResponseHandler;
+import net.sf.j2ep.responsehandlers.TraceResponseHandler;
 import org.apache.commons.httpclient.HttpMethod;
-import org.apache.commons.httpclient.methods.*;
+import org.apache.commons.httpclient.methods.DeleteMethod;
+import org.apache.commons.httpclient.methods.GetMethod;
+import org.apache.commons.httpclient.methods.HeadMethod;
+import org.apache.commons.httpclient.methods.OptionsMethod;
+import org.apache.commons.httpclient.methods.PostMethod;
+import org.apache.commons.httpclient.methods.PutMethod;
+import org.apache.commons.httpclient.methods.TraceMethod;
 
 /**
  * A factory creating ResponseHandlers.
@@ -32,16 +43,16 @@ import org.apache.commons.httpclient.methods.*;
  * @author Anders Nyman
  */
 public class ResponseHandlerFactory {
-    
-    /** 
+
+    /**
      * These methods are handled by this factory.
      */
     private static final String handledMethods = "OPTIONS,GET,HEAD,POST,PUT,DELETE,TRACE";
 
     /**
-     * Checks the method being received and created a 
+     * Checks the method being received and created a
      * suitable ResponseHandler for this method.
-     * 
+     *
      * @param method Method to handle
      * @return The handler for this response
      * @throws MethodNotAllowedException If no method could be choose this exception is thrown
@@ -50,7 +61,7 @@ public class ResponseHandlerFactory {
         if (!AllowedMethodHandler.methodAllowed(method)) {
             throw new MethodNotAllowedException("The method " + method.getName() + " is not in the AllowedHeaderHandler's list of allowed methods.", AllowedMethodHandler.getAllowHeader());
         }
-        
+
         ResponseHandler handler;
         if (method.getName().equals("OPTIONS")) {
             handler = new OptionsResponseHandler((OptionsMethod) method);

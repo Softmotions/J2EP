@@ -16,11 +16,10 @@
 
 package net.sf.j2ep.model;
 
-import java.io.IOException;
+import org.apache.commons.httpclient.HttpMethod;
 
 import javax.servlet.http.HttpServletRequest;
-
-import org.apache.commons.httpclient.HttpMethod;
+import java.io.IOException;
 
 /**
  * A handler for all requests. Will set the headers, process any
@@ -29,14 +28,14 @@ import org.apache.commons.httpclient.HttpMethod;
  * @author Anders Nyman
  */
 public interface RequestHandler {
-    
+
     /**
      * Creates a new HttpMethod for this request. Will then
      * set the headers and any other information needed for this
      * request.
-     * 
+     *
      * @param request The request we are processing
-     * @param url URL to bind the method to
+     * @param url     URL to bind the method to
      * @return The method we have created
      * @throws IOException An exception is thrown when there is a problem with the input supplied by the request
      */

@@ -16,55 +16,54 @@
 
 package net.sf.j2ep.servers;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletRequestWrapper;
 import java.util.Enumeration;
 import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletRequestWrapper;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 /**
  * A wrapper for requests that will create it's own set
- * of headers. The headers are the same except for 
+ * of headers. The headers are the same except for
  * cookies with a JSESSIONID that has a mark for a specific
- * server. More information about this can be found in the 
+ * server. More information about this can be found in the
  * ClusterServer
- * 
+ *
  * @author Anders Nyman, Daniel Deng
  * @see ClusterContainer
  */
 public class ClusterRequestWrapper extends HttpServletRequestWrapper {
-    
-    /** 
+
+    /**
      * The cookies for this request.
      */
     private Vector<String> cookies;
-    
-    /** 
+
+    /**
      * Regex to find session in cookies.
      */
     private static Pattern sessionPattern = Pattern.compile("((JSESSIONID=|PHPSESSID=|ASPSESSIONID=|ASP.NET_SessionId=)[a-z0-9]+)(\\.[^;\\s]+)", Pattern.CASE_INSENSITIVE | Pattern.CANON_EQ);
-    
-    /** 
+
+    /**
      * Logging element supplied by commons-logging.
      */
-    private static Log log = LogFactory.getLog(ClusterResponseWrapper.class);
-    
+    private static Logger log = LoggerFactory.getLogger(ClusterResponseWrapper.class);
+
     /**
      * Constructor, will check all cookies if they include
      * JSESSIONID. If they do any extra information about
      * which server this session was created for is removed.
-     * 
+     *
      * @param request The request we wrap.
      */
     public ClusterRequestWrapper(HttpServletRequest request) {
         super(request);
         cookies = new Vector<String>();
-        
+
         Enumeration reqCookies = request.getHeaders("Cookie");
         while (reqCookies.hasMoreElements()) {
             String value = (String) reqCookies.nextElement();
@@ -80,7 +79,7 @@ public class ClusterRequestWrapper extends HttpServletRequestWrapper {
     /**
      * Will return the default request's header unless we are requesting
      * a cookie. If it's a cookie we want we will use our own.
-     * 
+     *
      * @see javax.servlet.http.HttpServletRequest#getHeader(java.lang.String)
      */
     public String getHeader(String name) {
@@ -90,11 +89,11 @@ public class ClusterRequestWrapper extends HttpServletRequestWrapper {
             return super.getHeader(name);
         }
     }
-    
+
     /**
      * Will return the default request's headers unless we are requesting
      * a cookie. If it's a cookie we want we will use our own vector.
-     * 
+     *
      * @see javax.servlet.http.HttpServletRequest#getHeaders(java.lang.String)
      */
     public Enumeration getHeaders(String name) {
@@ -103,6 +102,6 @@ public class ClusterRequestWrapper extends HttpServletRequestWrapper {
         } else {
             return super.getHeaders(name);
         }
-    }   
-    
+    }
+
 }

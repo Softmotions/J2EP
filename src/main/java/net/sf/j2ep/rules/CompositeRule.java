@@ -16,16 +16,15 @@
 
 package net.sf.j2ep.rules;
 
+import net.sf.j2ep.model.Rule;
+
+import javax.servlet.http.HttpServletRequest;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.ListIterator;
 
-import javax.servlet.http.HttpServletRequest;
-
-import net.sf.j2ep.model.Rule;
-
 /**
- * This rule consists of many other rules using the 
+ * This rule consists of many other rules using the
  * composite design pattern. The rule is matches if
  * all the included rules are matched.
  *
@@ -33,20 +32,21 @@ import net.sf.j2ep.model.Rule;
  */
 public class CompositeRule extends BaseRule {
 
-    /** 
+    /**
      * The list of rules.
      */
     private LinkedList<Rule> rules;
-    
+
     /**
      * Empty constructor, will only create the list of rules.
      */
     public CompositeRule() {
         rules = new LinkedList<Rule>();
     }
-    
+
     /**
      * Used to add a rule to the list.
+     *
      * @param rule The rule to be added
      */
     public void addRule(Rule rule) {
@@ -56,10 +56,10 @@ public class CompositeRule extends BaseRule {
             rules.add(rule);
         }
     }
-    
+
     /**
      * Iterates over all the rules in the list checking that they all match.
-     * 
+     *
      * @return true if all the rules match or there are no rules, false otherwise
      * @see net.sf.j2ep.model.Rule#matches(javax.servlet.http.HttpServletRequest)
      */
@@ -70,14 +70,14 @@ public class CompositeRule extends BaseRule {
             Rule rule = (Rule) itr.next();
             matches = rule.matches(request);
         }
-        
+
         return matches;
     }
-    
+
     /**
      * Process all the rules in the list, allowing them all to change
      * the URI.
-     * 
+     *
      * @see net.sf.j2ep.model.Rule#process(java.lang.String)
      */
     public String process(String uri) {
@@ -85,15 +85,15 @@ public class CompositeRule extends BaseRule {
         for (Rule rule : rules) {
             returnString = rule.process(returnString);
         }
-        
+
         return returnString;
     }
-    
+
     /**
      * Will do the opposite of process, that is revert all URIs to there default
      * value. This method will call all rules in the rule list and call revert on them.
      * Rules are called in a reversed order in comparison with process.
-     * 
+     *
      * @see net.sf.j2ep.model.Rule#revert(java.lang.String)
      */
     public String revert(String uri) {

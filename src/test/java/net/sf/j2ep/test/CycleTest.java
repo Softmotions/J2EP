@@ -16,15 +16,13 @@
 
 package net.sf.j2ep.test;
 
-import java.io.IOException;
-
-import javax.servlet.ServletException;
-
 import net.sf.j2ep.ProxyFilter;
-
 import org.apache.cactus.FilterTestCase;
 import org.apache.cactus.WebRequest;
 import org.apache.cactus.WebResponse;
+
+import javax.servlet.ServletException;
+import java.io.IOException;
 
 public class CycleTest extends FilterTestCase {
 
@@ -34,7 +32,7 @@ public class CycleTest extends FilterTestCase {
         proxyFilter = new ProxyFilter();
 
         config.setInitParameter("dataUrl",
-                "/WEB-INF/classes/net/sf/j2ep/test/testData.xml");
+                                "/WEB-INF/classes/net/sf/j2ep/test/testData.xml");
         try {
             proxyFilter.init(config);
         } catch (ServletException e) {

@@ -16,30 +16,29 @@
 
 package net.sf.j2ep;
 
-import java.util.Iterator;
-import java.util.List;
-
-import javax.servlet.http.HttpServletRequest;
-
 import net.sf.j2ep.model.Rule;
 import net.sf.j2ep.model.Server;
 import net.sf.j2ep.model.ServerContainer;
+
+import javax.servlet.http.HttpServletRequest;
+import java.util.Iterator;
+import java.util.List;
 
 
 /**
  * A ServerChain is a list of server
  * considered in order.  The first
- * server with a rule that successfully matches 
+ * server with a rule that successfully matches
  * tops the evaluation of servers
- * 
- * This is only a slightly modified version of the 
- * RuleChain used with the balancer webapp shipped 
+ * <p/>
+ * This is only a slightly modified version of the
+ * RuleChain used with the balancer webapp shipped
  * with tomcat.
  *
  * @author Anders Nyman, Yoav Shapira, Daniel Deng
  */
-public class ServerChain{
-    
+public class ServerChain {
+
     /**
      * The list of servers to evaluate.
      */
@@ -103,19 +102,19 @@ public class ServerChain{
             currentContainer = (ServerContainer) itr.next();
             currentMatches = currentContainer.getRule().matches(request);
         }
-        
+
         if (currentMatches) {
             return currentContainer.getServer(request);
         } else {
             return null;
         }
     }
-    
+
     /**
-     * Finds a server with the full path specified by the 
-     * location sent in. This is used when we want to find a 
+     * Finds a server with the full path specified by the
+     * location sent in. This is used when we want to find a
      * server that can handle a request.
-     * 
+     *
      * @param location The location we want a server for.
      * @return The matching server, if no server is found null is returned
      * @see ServerContainer#getServerMapped(String)

@@ -16,9 +16,8 @@
 
 package net.sf.j2ep.rules;
 
-import java.util.StringTokenizer;
-
 import javax.servlet.http.HttpServletRequest;
+import java.util.StringTokenizer;
 
 /**
  * This rule will check the IP for the remote user
@@ -27,13 +26,13 @@ import javax.servlet.http.HttpServletRequest;
  * @author Anders Nyman
  */
 public class IPRule extends BaseRule {
-    
-    /** 
+
+    /**
      * The starting IP range.
      */
     private String startRange;
-    
-    /** 
+
+    /**
      * The ending IP range.
      */
     private String endRange;
@@ -41,7 +40,7 @@ public class IPRule extends BaseRule {
     /**
      * Checks the IP for the remote user, if it's in the specified
      * range it's a match.
-     * 
+     *
      * @see net.sf.j2ep.model.Rule#matches(javax.servlet.http.HttpServletRequest)
      */
     public boolean matches(HttpServletRequest request) {
@@ -49,7 +48,7 @@ public class IPRule extends BaseRule {
         if (getStartRange() != null && getEndRange() != null) {
             String ip = request.getRemoteAddr();
             match = (ip.compareTo(getStartRange()) >= 0 && ip
-                    .compareTo(getEndRange()) <= 0);
+                                                                   .compareTo(getEndRange()) <= 0);
         }
         return match;
     }
@@ -58,7 +57,7 @@ public class IPRule extends BaseRule {
      * Checks to see is a specified IP range is OK. OK means
      * that it's in the range 0.0.0.0 to 255.255.255.255 and
      * that the value is a correct IP address.
-     * 
+     *
      * @param range The value to check
      * @return Will give true if the range is OK
      */
@@ -77,22 +76,22 @@ public class IPRule extends BaseRule {
         } catch (NumberFormatException e) {
             correct = false;
         }
-        
+
         return correct;
     }
 
     /**
      * Sets the beginning range that a connection has to be made from to be
      * triggered by this rule.
-     * 
+     *
      * @param startRange The start of the IP range
      */
     public void setStartRange(String startRange) {
-        if(startRange == null) {
+        if (startRange == null) {
             throw new IllegalArgumentException("The startRange cannot be null.");
-        } else if(!validRange(startRange)) {
+        } else if (!validRange(startRange)) {
             throw new IllegalArgumentException("IP range has to be between \"0.0.0.0\" and \"255.255.255.255\".");
-        } else if(getEndRange() != null && startRange.compareTo(getEndRange()) > 0) {
+        } else if (getEndRange() != null && startRange.compareTo(getEndRange()) > 0) {
             throw new IllegalArgumentException("Starting range has to come before the ending range.");
         }
         this.startRange = startRange;
@@ -101,7 +100,7 @@ public class IPRule extends BaseRule {
     /**
      * Returns the beginning range that a connection has to be made from
      * to be triggered by this rule.
-     * 
+     *
      * @return The start of the IP range
      */
     protected String getStartRange() {
@@ -111,17 +110,17 @@ public class IPRule extends BaseRule {
     /**
      * Sets the ending range that a connection has to be made from
      * to be triggered by this rule.
-     * 
+     *
      * @param endRange The end of the IP range
      */
     public void setEndRange(String endRange) {
-        if(endRange == null) {
+        if (endRange == null) {
             throw new IllegalArgumentException("The endRange cannot be null.");
-        } else if(!validRange(endRange)) {
+        } else if (!validRange(endRange)) {
             throw new IllegalArgumentException("IP range has to be between \"0.0.0.0\" and \"255.255.255.255\".");
-        } else if(getStartRange() != null && endRange.compareTo(getStartRange()) < 0) {
+        } else if (getStartRange() != null && endRange.compareTo(getStartRange()) < 0) {
             throw new IllegalArgumentException("Ending range has to come after the starting range.");
-            
+
         }
         this.endRange = endRange;
     }
@@ -129,7 +128,7 @@ public class IPRule extends BaseRule {
     /**
      * Returns the ending range that a connection has to be made from
      * to be triggered by this rule.
-     * 
+     *
      * @return The end of the IP range
      */
     protected String getEndRange() {

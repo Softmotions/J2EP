@@ -16,14 +16,6 @@
 
 package net.sf.j2ep;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.UnknownHostException;
-
-import javax.servlet.*;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import net.sf.j2ep.factories.MethodNotAllowedException;
 import net.sf.j2ep.factories.RequestHandlerFactory;
 import net.sf.j2ep.factories.ResponseHandlerFactory;
@@ -31,12 +23,28 @@ import net.sf.j2ep.model.AllowedMethodHandler;
 import net.sf.j2ep.model.RequestHandler;
 import net.sf.j2ep.model.ResponseHandler;
 import net.sf.j2ep.model.Server;
-
-import org.apache.commons.httpclient.*;
+import org.apache.commons.httpclient.Header;
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.HttpException;
+import org.apache.commons.httpclient.HttpMethod;
+import org.apache.commons.httpclient.HttpMethodBase;
+import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
 import org.apache.commons.httpclient.cookie.CookiePolicy;
 import org.apache.commons.httpclient.params.HttpClientParams;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.File;
+import java.io.IOException;
+import java.net.UnknownHostException;
 
 /**
  * A reverse proxy using a set of Rules to identify which resource to proxy.
@@ -62,7 +70,7 @@ public class ProxyFilter implements Filter {
     /** 
      * Logging element supplied by commons-logging.
      */
-    private static Log log;
+    private static Logger log;
     
     /** 
      * The httpclient used to make all connections with, supplied by commons-httpclient.
@@ -92,7 +100,7 @@ public class ProxyFilter implements Filter {
         } else {
             String uri = server.getRule().process(getURI(httpRequest));
             String url = request.getScheme() + "://" + server.getDomainName() + server.getPath() + uri;
-            log.debug("Connecting to " + url);
+            if (log.isDebugEnabled()) log.debug("Connecting to " + url);
             
             ResponseHandler responseHandler = null;
             
@@ -189,10 +197,13 @@ public class ProxyFilter implements Filter {
      * RuleChain back. Will also configure the httpclient.
      */
     public void init(FilterConfig filterConfig) throws ServletException {
-        log = LogFactory.getLog(ProxyFilter.class);
+        log = LoggerFactory.getLogger(ProxyFilter.class);
         AllowedMethodHandler.setAllowedMethods("OPTIONS,GET,HEAD,POST,PUT,DELETE,TRACE");
-        
-        httpClient = new HttpClient(new MultiThreadedHttpConnectionManager());
+
+        MultiThreadedHttpConnectionManager cm = new MultiThreadedHttpConnectionManager();
+        httpClient = new HttpClient(cm);
+        cm.getParams().setDefaultMaxConnectionsPerHost(10);
+        cm.getParams().setMaxTotalConnections(30);
         httpClient.getParams().setBooleanParameter(HttpClientParams.USE_EXPECT_CONTINUE, false);
         httpClient.getParams().setCookiePolicy(CookiePolicy.IGNORE_COOKIES);
         

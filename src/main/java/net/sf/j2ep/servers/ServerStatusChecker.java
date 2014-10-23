@@ -16,17 +16,16 @@
 
 package net.sf.j2ep.servers;
 
-import java.util.Iterator;
-import java.util.LinkedList;
-
 import net.sf.j2ep.model.Server;
-
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.cookie.CookiePolicy;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.params.HttpClientParams;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Iterator;
+import java.util.LinkedList;
 
 /**
  * A class that will check if servers are online and
@@ -36,60 +35,61 @@ import org.apache.commons.logging.LogFactory;
  * @author Anders Nyman, Daniel Deng
  */
 public class ServerStatusChecker extends Thread {
-    
-    /** 
+
+    /**
      * The online servers.
      */
     private LinkedList<Server> online;
-    
-    /** 
+
+    /**
      * The offline servers.
      */
     private LinkedList<Server> offline;
-    
-    /** 
+
+    /**
      * Client used to make the connections.
      */
     private HttpClient httpClient;
-    
-    /** 
+
+    /**
      * The listener we notify when a servers status changes.
      */
     private ServerStatusListener listener;
-    
-    /** 
+
+    /**
      * The time we wait between checking the servers status.
      */
     private long pollingTime;
-    
-    /** 
+
+    /**
      * Logging element supplied by commons-logging.
      */
-    private static Log log = LogFactory.getLog(ServerStatusChecker.class);
-    
+    private static Logger log = LoggerFactory.getLogger(ServerStatusChecker.class);
+
     /**
      * Basic constructor sets the listener to notify when
      * servers goes down/up. Also sets the polling time
      * which decides how long we wait between doing checks.
-     * 
-     * @param listener The listener
+     *
+     * @param listener    The listener
      * @param pollingTime The time we wait between checks, in milliseconds
      */
     public ServerStatusChecker(ServerStatusListener listener, long pollingTime) {
         this.listener = listener;
-        this.pollingTime = Math.max(30*1000, pollingTime);
-        setPriority(Thread.NORM_PRIORITY-1);
+        this.pollingTime = Math.max(30 * 1000, pollingTime);
+        setPriority(Thread.NORM_PRIORITY - 1);
         setDaemon(true);
-        
+
         online = new LinkedList<Server>();
         offline = new LinkedList<Server>();
-        httpClient = new HttpClient(); 
+        httpClient = new HttpClient();
         httpClient.getParams().setBooleanParameter(HttpClientParams.USE_EXPECT_CONTINUE, false);
         httpClient.getParams().setCookiePolicy(CookiePolicy.IGNORE_COOKIES);
     }
-    
+
     /**
      * Runs the tests
+     *
      * @see java.lang.Runnable#run()
      */
     @SuppressWarnings("InfiniteLoopStatement")
@@ -103,7 +103,7 @@ public class ServerStatusChecker extends Thread {
             }
         }
     }
-    
+
     /**
      * Checks all the servers marked as being online
      * if they still are online.
@@ -116,19 +116,19 @@ public class ServerStatusChecker extends Thread {
             String url = getServerURL(server);
             GetMethod get = new GetMethod(url);
             get.setFollowRedirects(false);
-            
+
             try {
                 httpClient.executeMethod(get);
                 if (!okServerResponse(get.getStatusCode())) {
                     offline.add(server);
                     itr.remove();
-                    log.debug("Server going OFFLINE! " + getServerURL(server));
+                    if (log.isDebugEnabled()) log.debug("Server going OFFLINE! " + getServerURL(server));
                     listener.serverOffline(server);
                 }
-            } catch (Exception e) { 
+            } catch (Exception e) {
                 offline.add(server);
                 itr.remove();
-                log.debug("Server going OFFLINE! " + getServerURL(server));
+                if (log.isDebugEnabled()) log.debug("Server going OFFLINE! " + getServerURL(server));
                 listener.serverOffline(server);
             } finally {
                 get.releaseConnection();
@@ -147,14 +147,14 @@ public class ServerStatusChecker extends Thread {
             String url = getServerURL(server);
             GetMethod get = new GetMethod(url);
             get.setFollowRedirects(false);
-            
+
             try {
                 httpClient.executeMethod(get);
                 if (okServerResponse(get.getStatusCode())) {
                     online.add(server);
                     itr.remove();
-                    log.debug("Server back online " + getServerURL(server));
-                    listener.serverOnline(server); 
+                    if (log.isDebugEnabled()) log.debug("Server back online " + getServerURL(server));
+                    listener.serverOnline(server);
                 }
             } catch (Exception e) {
                 listener.serverOffline(server);
@@ -166,31 +166,32 @@ public class ServerStatusChecker extends Thread {
 
     /**
      * Returns the URL to the server
+     *
      * @param server The server we are connection to
      * @return The URL
      */
     private String getServerURL(Server server) {
         return "http://" + server.getDomainName() + server.getPath() + "/";
     }
-    
+
     /**
-     * Checks the status code received from the server and 
+     * Checks the status code received from the server and
      * validates if this server should be considered online
      * or offline.
-     * 
+     *
      * @param statusCode The status code received
      * @return true if the server if online, otherwise false
      */
     private boolean okServerResponse(int statusCode) {
-        return !(statusCode/100 == 5);
+        return !(statusCode / 100 == 5);
     }
- 
+
     /**
      * Adds a server that we will check for it's status.
      * The server is added to the offline list and will first
      * come online when we have managed to make a connection
      * to it.
-     * 
+     *
      * @param server The server to add
      */
     public synchronized void addServer(Server server) {

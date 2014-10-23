@@ -16,16 +16,14 @@
 
 package net.sf.j2ep.responsehandlers;
 
-import java.io.IOException;
-
-import javax.servlet.http.HttpServletResponse;
-
 import net.sf.j2ep.model.AllowedMethodHandler;
-
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.methods.OptionsMethod;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 
 /**
  * Handler for the OPTIONS method.
@@ -37,12 +35,12 @@ import org.apache.commons.logging.LogFactory;
  */
 public class OptionsResponseHandler extends ResponseHandlerBase {
 
-    /** 
+    /**
      * The logger.
      */
-    private static Log log = LogFactory.getLog(OptionsResponseHandler.class);
-    
-    /** 
+    private static Logger log = LoggerFactory.getLogger(OptionsResponseHandler.class);
+
+    /**
      * Set a construction to indicate if the request is directed to the
      * proxy directly by using Max-Forwards: 0 or using URI *.
      */
@@ -51,7 +49,7 @@ public class OptionsResponseHandler extends ResponseHandlerBase {
     /**
      * Constructor checking if we should handle the Allow header
      * ourself or respond with the backing servers header.
-     * 
+     *
      * @param method The method for this response
      */
     public OptionsResponseHandler(OptionsMethod method) {
@@ -60,12 +58,12 @@ public class OptionsResponseHandler extends ResponseHandlerBase {
     }
 
     /**
-     * Will check if we are to handle this request, if so 
-     * the http methods allowed by this proxy is returned in the 
+     * Will check if we are to handle this request, if so
+     * the http methods allowed by this proxy is returned in the
      * Allow header.
      * If it is a request meant for the backing server its
      * allowed method will be returned.
-     * 
+     *
      * @see net.sf.j2ep.model.ResponseHandler#process(javax.servlet.http.HttpServletResponse)
      */
     public void process(HttpServletResponse response) {
@@ -96,7 +94,7 @@ public class OptionsResponseHandler extends ResponseHandlerBase {
     /**
      * Returns 200 if the request is targeted to the proxy
      * otherwise the normal status code is returned.
-     * 
+     *
      * @see net.sf.j2ep.model.ResponseHandler#getStatusCode()
      */
     public int getStatusCode() {

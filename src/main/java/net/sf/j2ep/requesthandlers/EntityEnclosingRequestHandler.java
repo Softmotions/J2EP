@@ -16,16 +16,14 @@
 
 package net.sf.j2ep.requesthandlers;
 
-import java.io.IOException;
-
-import javax.servlet.http.HttpServletRequest;
-
-
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.methods.EntityEnclosingMethod;
 import org.apache.commons.httpclient.methods.InputStreamRequestEntity;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.PutMethod;
+
+import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
 
 /**
  * Handler for POST and PUT methods.
@@ -37,14 +35,14 @@ public class EntityEnclosingRequestHandler extends RequestHandlerBase {
     /**
      * Will set the input stream and the Content-Type header to match this request.
      * Will also set the other headers send in the request.
-     * 
+     *
      * @throws IOException An exception is throws when there is a problem getting the input stream
      * @see net.sf.j2ep.model.RequestHandler#process(javax.servlet.http.HttpServletRequest, java.lang.String)
      */
     public HttpMethod process(HttpServletRequest request, String url) throws IOException {
-        
+
         EntityEnclosingMethod method;
-        
+
         if (request.getMethod().equalsIgnoreCase("POST")) {
             method = new PostMethod(url);
         } else if (request.getMethod().equalsIgnoreCase("PUT")) {
@@ -54,12 +52,12 @@ public class EntityEnclosingRequestHandler extends RequestHandlerBase {
         }
 
         setHeaders(method, request);
-        
+
         InputStreamRequestEntity stream;
         stream = new InputStreamRequestEntity(request.getInputStream());
         method.setRequestEntity(stream);
         method.setRequestHeader("Content-type", request.getContentType());
-        
+
         return method;
     }
 }

@@ -16,17 +16,20 @@
 
 package net.sf.j2ep;
 
-import java.io.File;
-import java.io.IOException;
+import net.sf.j2ep.model.Server;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import javax.servlet.*;
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import net.sf.j2ep.model.Server;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import java.io.File;
+import java.io.IOException;
 
 /**
  * A filter that will locate the appropriate Rule
@@ -41,7 +44,7 @@ public class RewriteFilter implements Filter {
     /** 
      * Logging element supplied by commons-logging.
      */
-    private static Log log;
+    private static Logger log;
     
     /** 
      * The server chain, will be traversed to find a matching server.
@@ -95,7 +98,7 @@ public class RewriteFilter implements Filter {
      * @see javax.servlet.Filter#init(javax.servlet.FilterConfig)
      */
     public void init(FilterConfig filterConfig) throws ServletException {
-        log = LogFactory.getLog(RewriteFilter.class);
+        log = LoggerFactory.getLogger(RewriteFilter.class);
         
         String data = filterConfig.getInitParameter("dataUrl");
         if (data == null) {

@@ -16,14 +16,14 @@
 
 package net.sf.j2ep.factories;
 
-import java.util.HashMap;
-
 import net.sf.j2ep.model.AllowedMethodHandler;
 import net.sf.j2ep.model.RequestHandler;
 import net.sf.j2ep.requesthandlers.BasicRequestHandler;
 import net.sf.j2ep.requesthandlers.EntityEnclosingRequestHandler;
 import net.sf.j2ep.requesthandlers.MaxForwardRequestHandler;
 import net.sf.j2ep.requesthandlers.RequestHandlerBase;
+
+import java.util.HashMap;
 
 /**
  * A factory creating RequestHandlers.
@@ -34,25 +34,25 @@ import net.sf.j2ep.requesthandlers.RequestHandlerBase;
  * @author Anders Nyman
  */
 public class RequestHandlerFactory {
-    
-    /** 
+
+    /**
      * The RequestHandlers to return.
      */
     private static HashMap<String, RequestHandler> requestHandlers;
-    
-    /** 
+
+    /**
      * These methods are handled by this factory.
      */
     private static final String handledMethods = "OPTIONS,GET,HEAD,POST,PUT,DELETE,TRACE";
-    
-    /** 
+
+    /**
      * List of banned headers that should not be set.
      */
     private static final String bannedHeaders = "connection,accept-encoding,via,x-forwarded-for,x-forwarded-host,x-forwarded-server";
-    
+
     static {
         RequestHandlerBase.addBannedHeaders(bannedHeaders);
-        
+
         requestHandlers = new HashMap<String, RequestHandler>();
         MaxForwardRequestHandler optionsAndTrace = new MaxForwardRequestHandler();
         BasicRequestHandler basic = new BasicRequestHandler();
@@ -66,19 +66,19 @@ public class RequestHandlerFactory {
         requestHandlers.put("DELETE", basic);
         requestHandlers.put("TRACE", optionsAndTrace);
     }
-    
+
     /**
      * Selects one suitable RequestMethod from the HashMap.
-     * 
+     *
      * @param method The method of this request
      * @return A RequestHandler that can handle this request
      * @throws MethodNotAllowedException If there is no RequestHandler available an exception will be thrown
      */
-    public static RequestHandler createRequestMethod(String method) throws MethodNotAllowedException{
+    public static RequestHandler createRequestMethod(String method) throws MethodNotAllowedException {
         if (!AllowedMethodHandler.methodAllowed(method)) {
             throw new MethodNotAllowedException("The method " + method + " is not in the AllowedHeaderHandler's list of allowed methods.", AllowedMethodHandler.getAllowHeader());
         }
-        
+
         RequestHandler handler = requestHandlers.get(method.toUpperCase());
         if (handler == null) {
             throw new MethodNotAllowedException("The method " + method + " was allowed by the AllowedMethodHandler, not by the factory.", handledMethods);

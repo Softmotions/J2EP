@@ -16,33 +16,33 @@
 
 package net.sf.j2ep.rules;
 
-import java.util.Calendar;
-
 import javax.servlet.http.HttpServletRequest;
+import java.util.Calendar;
 
 /**
  * A simple rule that checks the hour. If the hour
- * is in the specified range we will allow the 
+ * is in the specified range we will allow the
  * request.
  *
  * @author Anders Nyman
  */
 public class TimeRule extends BaseRule {
-    
-    /** 
+
+    /**
      * The start hour
      */
     private int startTime;
-    
-    /** 
+
+    /**
      * The end hour
      */
     private int endTime;
 
     /**
-     * Making check to see that the time lies between the start and end 
+     * Making check to see that the time lies between the start and end
      * time. If the time crosses a date barrier, e.g. 23-01 the time will
      * be checked correctly. Note the difference between 01-23 and 23-01.
+     *
      * @see net.sf.j2ep.model.Rule#matches(javax.servlet.http.HttpServletRequest)
      */
     public boolean matches(HttpServletRequest request) {
@@ -51,37 +51,37 @@ public class TimeRule extends BaseRule {
             if (currentTime < startTime) {
                 currentTime += 24;
             }
-            return (currentTime >= startTime && currentTime <= endTime+24);  
+            return (currentTime >= startTime && currentTime <= endTime + 24);
         } else {
-            return (currentTime >= startTime && currentTime <= endTime);  
+            return (currentTime >= startTime && currentTime <= endTime);
         }
-              
+
     }
-    
+
     /**
      * Sets the start hour that requests will be allowed.
-     * 
+     *
      * @param time The hour
      */
     public void setStartTime(String time) {
         if (time == null) {
             throw new IllegalArgumentException("The start time cannot be null");
         } else {
-            startTime = Integer.parseInt(time)%24;
+            startTime = Integer.parseInt(time) % 24;
         }
     }
-    
+
     /**
      * Sets the end hour that request will be allowed.
-     * 
+     *
      * @param time The hour
      */
     public void setEndTime(String time) {
         if (time == null) {
             throw new IllegalArgumentException("The end time cannot be null");
         } else {
-            endTime = Integer.parseInt(time)%24;
+            endTime = Integer.parseInt(time) % 24;
         }
-    } 
+    }
 
 }

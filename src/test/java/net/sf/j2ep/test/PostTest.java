@@ -16,12 +16,7 @@
 
 package net.sf.j2ep.test;
 
-import java.io.*;
-
-import javax.servlet.ServletException;
-
 import net.sf.j2ep.ProxyFilter;
-
 import org.apache.cactus.FilterTestCase;
 import org.apache.cactus.WebRequest;
 import org.apache.cactus.WebResponse;
@@ -31,11 +26,18 @@ import org.apache.commons.httpclient.methods.multipart.MultipartRequestEntity;
 import org.apache.commons.httpclient.methods.multipart.Part;
 import org.apache.commons.httpclient.methods.multipart.StringPart;
 
+import javax.servlet.ServletException;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+
 public class PostTest extends FilterTestCase {
-    
+
     private ProxyFilter proxyFilter;
 
-    public void setUp() {        
+    public void setUp() {
         proxyFilter = new ProxyFilter();
 
         config.setInitParameter("dataUrl", "/WEB-INF/classes/net/sf/j2ep/test/testData.xml");
@@ -46,16 +48,16 @@ public class PostTest extends FilterTestCase {
         }
     }
 
-    
+
     public void beginSendParam(WebRequest theRequest) {
         theRequest.setURL("localhost:8080", "/test", "/POST/param.jsp", null, null);
         theRequest.addParameter("testParam", "myValue", WebRequest.POST_METHOD);
     }
-    
+
     public void testSendParam() throws IOException, ServletException {
         proxyFilter.doFilter(request, response, filterChain);
     }
-    
+
     public void endSendParam(WebResponse theResponse) {
         assertEquals("Checking output", "myValue", theResponse.getText());
     }
@@ -63,7 +65,7 @@ public class PostTest extends FilterTestCase {
     public void beginSendMultipart(WebRequest theRequest) {
         theRequest.setURL("localhost:8080", "/test", "/POST/multipart.jsp", null, null);
         theRequest.addParameter("tmp", "", WebRequest.POST_METHOD);
-        
+
         try {
             PostMethod post = new PostMethod();
             FilePart filePart = new FilePart("theFile", new File("WEB-INF/classes/net/sf/j2ep/test/POSTdata"));
@@ -72,7 +74,7 @@ public class PostTest extends FilterTestCase {
             parts[0] = stringPart;
             parts[1] = filePart;
             MultipartRequestEntity reqEntitiy = new MultipartRequestEntity(parts, post.getParams());
-            
+
             ByteArrayOutputStream outStream = new ByteArrayOutputStream();
             reqEntitiy.writeRequest(outStream);
 
@@ -85,14 +87,14 @@ public class PostTest extends FilterTestCase {
             e.printStackTrace();
         }
     }
-    
+
     public void testSendMultipart() throws IOException, ServletException {
         proxyFilter.doFilter(request, response, filterChain);
     }
-    
+
     public void endSendMultipart(WebResponse theResponse) {
-        assertTrue("Checking for the param", theResponse.getText().indexOf("123456")>-1);
-        assertTrue("Checking for the file data", theResponse.getText().indexOf("here is some data that will be sent using multipart POST")>-1);
+        assertTrue("Checking for the param", theResponse.getText().indexOf("123456") > -1);
+        assertTrue("Checking for the file data", theResponse.getText().indexOf("here is some data that will be sent using multipart POST") > -1);
     }
-    
+
 }

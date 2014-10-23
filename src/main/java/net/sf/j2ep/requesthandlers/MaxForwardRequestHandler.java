@@ -16,15 +16,14 @@
 
 package net.sf.j2ep.requesthandlers;
 
-import java.io.IOException;
-import java.util.Enumeration;
-
-import javax.servlet.http.HttpServletRequest;
-
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.HttpMethodBase;
 import org.apache.commons.httpclient.methods.OptionsMethod;
 import org.apache.commons.httpclient.methods.TraceMethod;
+
+import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
+import java.util.Enumeration;
 
 
 /**
@@ -38,12 +37,12 @@ public class MaxForwardRequestHandler extends RequestHandlerBase {
      * Sets the headers and does some checking for if this request
      * is meant for the server or for the proxy. This check is done
      * by looking at the Max-Forwards header.
-     * 
+     *
      * @see net.sf.j2ep.model.RequestHandler#process(javax.servlet.http.HttpServletRequest, java.lang.String)
      */
     public HttpMethod process(HttpServletRequest request, String url) throws IOException {
         HttpMethodBase method;
-        
+
         if (request.getMethod().equalsIgnoreCase("OPTIONS")) {
             method = new OptionsMethod(url);
         } else if (request.getMethod().equalsIgnoreCase("TRACE")) {
@@ -51,7 +50,7 @@ public class MaxForwardRequestHandler extends RequestHandlerBase {
         } else {
             return null;
         }
-        
+
         try {
             int max = request.getIntHeader("Max-Forwards");
             if (max == 0 || request.getRequestURI().equals("*")) {
@@ -63,32 +62,34 @@ public class MaxForwardRequestHandler extends RequestHandlerBase {
             } else {
                 setHeaders(method, request);
             }
-        } catch (NumberFormatException ignored) {}
-        
+        } catch (NumberFormatException ignored) {
+        }
+
         return method;
     }
-    
+
     /**
      * Will write all the headers included in the request to the method.
      * The difference between this method and setHeaders in BasicRequestHandler
      * is that the BasicRequestHandler will also add Via, x-forwarded-for, etc.
      * These "special" headers should not be added when the proxy is target
      * directly with a Max-Forwards: 0 headers.
-     * @param method The method to write to
+     *
+     * @param method  The method to write to
      * @param request The incoming request
      * @see RequestHandlerBase#setHeaders(HttpMethod, HttpServletRequest)
      */
     private void setAllHeaders(HttpMethod method, HttpServletRequest request) {
         Enumeration headers = request.getHeaderNames();
-        
+
         while (headers.hasMoreElements()) {
             String name = (String) headers.nextElement();
             Enumeration value = request.getHeaders(name);
-            
+
             while (value.hasMoreElements()) {
                 method.addRequestHeader(name, (String) value.nextElement());
             }
 
-        } 
+        }
     }
 }

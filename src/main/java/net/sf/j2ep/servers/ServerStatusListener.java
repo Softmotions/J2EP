@@ -16,9 +16,9 @@
 
 package net.sf.j2ep.servers;
 
-import java.util.EventListener;
-
 import net.sf.j2ep.model.Server;
+
+import java.util.EventListener;
 
 /**
  * A listener for status messages for the servers.
@@ -29,19 +29,19 @@ import net.sf.j2ep.model.Server;
  * @author Anders Nyman
  */
 public interface ServerStatusListener extends EventListener {
-    
+
     /**
      * Notifies that a servers has gone down
-     * 
+     *
      * @param server Server that is now offline
      */
     public void serverOffline(Server server);
-    
+
     /**
      * Notifies that a server is online. This
      * means that the server previously has been marked
      * as being offline.
-     * 
+     *
      * @param server Server that is now online
      */
     public void serverOnline(Server server);
