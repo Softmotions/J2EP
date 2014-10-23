@@ -47,6 +47,9 @@ public class BaseServer extends ServerContainerBase implements Server {
      */
     private String path;
 
+    private String redirect;
+
+
     /**
      * Basic constructor that will initialize
      * the directory to "".
@@ -54,6 +57,14 @@ public class BaseServer extends ServerContainerBase implements Server {
     public BaseServer() {
         path = "";
         isRewriting = false;
+    }
+
+    public String getRedirect() {
+        return redirect;
+    }
+
+    public void setRedirect(String redirect) {
+        this.redirect = redirect;
     }
 
     /**

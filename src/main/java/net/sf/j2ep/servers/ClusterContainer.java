@@ -284,6 +284,10 @@ public abstract class ClusterContainer extends ServerContainerBase implements Se
             return domainName;
         }
 
+        public String getRedirect() {
+            return null;
+        }
+
         /**
          * @see net.sf.j2ep.model.Server#getPath()
          */

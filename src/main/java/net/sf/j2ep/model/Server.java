@@ -79,7 +79,9 @@ public interface Server {
      */
     String getPath();
 
-    
+    String getRedirect();
+
+
     /**
      * Returns the mapped rule so we can rewrite links.
      * 

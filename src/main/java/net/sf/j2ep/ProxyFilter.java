@@ -22,6 +22,7 @@ import net.sf.j2ep.factories.ResponseHandlerFactory;
 import net.sf.j2ep.model.AllowedMethodHandler;
 import net.sf.j2ep.model.RequestHandler;
 import net.sf.j2ep.model.ResponseHandler;
+import net.sf.j2ep.model.Rule;
 import net.sf.j2ep.model.Server;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -92,49 +93,64 @@ public class ProxyFilter implements Filter {
      * @see javax.servlet.Filter#doFilter(javax.servlet.ServletRequest,
      * javax.servlet.ServletResponse, javax.servlet.FilterChain)
      */
-    public void doFilter(ServletRequest request, ServletResponse response,
+    public void doFilter(ServletRequest req, ServletResponse resp,
                          FilterChain filterChain) throws IOException, ServletException {
 
-        HttpServletResponse httpResponse = (HttpServletResponse) response;
-        HttpServletRequest httpRequest = (HttpServletRequest) request;
+        HttpServletResponse httpResponse = (HttpServletResponse) resp;
+        HttpServletRequest httpRequest = (HttpServletRequest) req;
 
         Server server = (Server) httpRequest.getAttribute("proxyServer");
         if (server == null) {
             server = serverChain.evaluate(httpRequest);
         }
         if (server == null) {
-            filterChain.doFilter(request, response);
-        } else {
-            String uri = server.getRule().process(getURI(httpRequest));
-            String url = request.getScheme() + "://" + server.getDomainName() + server.getPath() + uri;
-            //if (log.isDebugEnabled()) log.debug("Connecting to " + url);
+            filterChain.doFilter(req, resp);
+            return;
+        }
 
-            ResponseHandler responseHandler = null;
-            try {
-                httpRequest = server.preExecute(httpRequest);
-                responseHandler = executeRequest(server, httpRequest, url);
-                httpResponse = server.postExecute(httpResponse);
-                responseHandler.process(httpResponse);
+        String redirect = server.getRedirect();
+        if (redirect != null) {
+            ((HttpServletResponse) resp).sendRedirect(redirect);
+            return;
+        }
 
-            } catch (UnknownHostException e) {
-                log.error("Could not connection to the host specified", e);
-                httpResponse.setStatus(HttpServletResponse.SC_GATEWAY_TIMEOUT);
-                server.setConnectionExceptionRecieved(e);
-            } catch (IOException e) {
-                log.error("Problem probably with the input being send, either with a Header or the Stream", e);
-                httpResponse.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            } catch (MethodNotAllowedException e) {
-                log.error("Incoming method could not be handled", e);
-                httpResponse.setStatus(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
-                httpResponse.setHeader("Allow", e.getAllowedMethods());
-            } catch (Exception e) {
-                log.error("Problem while connecting to server", e);
-                httpResponse.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                server.setConnectionExceptionRecieved(e);
-            } finally {
-                if (responseHandler != null) {
-                    responseHandler.close();
-                }
+        Rule rule = server.getRule();
+        if (rule == null) {
+            log.warn("No proxy rule for: " + server);
+            filterChain.doFilter(req, resp);
+            return;
+        }
+
+        String uri = rule.process(getURI(httpRequest));
+        String url = req.getScheme() + "://" + server.getDomainName() + server.getPath() + uri;
+        //if (log.isDebugEnabled()) log.debug("Connecting to " + url);
+
+        ResponseHandler responseHandler = null;
+        try {
+
+            httpRequest = server.preExecute(httpRequest);
+            responseHandler = executeRequest(server, httpRequest, url);
+            httpResponse = server.postExecute(httpResponse);
+            responseHandler.process(httpResponse);
+
+        } catch (UnknownHostException e) {
+            log.error("Could not connection to the host specified", e);
+            httpResponse.setStatus(HttpServletResponse.SC_GATEWAY_TIMEOUT);
+            server.setConnectionExceptionRecieved(e);
+        } catch (IOException e) {
+            log.error("Problem probably with the input being send, either with a Header or the Stream", e);
+            httpResponse.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        } catch (MethodNotAllowedException e) {
+            log.error("Incoming method could not be handled", e);
+            httpResponse.setStatus(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
+            httpResponse.setHeader("Allow", e.getAllowedMethods());
+        } catch (Exception e) {
+            log.error("Problem while connecting to server", e);
+            httpResponse.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            server.setConnectionExceptionRecieved(e);
+        } finally {
+            if (responseHandler != null) {
+                responseHandler.close();
             }
         }
     }
