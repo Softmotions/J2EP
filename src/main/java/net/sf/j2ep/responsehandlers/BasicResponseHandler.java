@@ -16,7 +16,7 @@
 
 package net.sf.j2ep.responsehandlers;
 
-import org.apache.commons.httpclient.HttpMethod;
+import org.apache.http.client.methods.CloseableHttpResponse;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -32,23 +32,23 @@ public class BasicResponseHandler extends ResponseHandlerBase {
 
     /**
      * Default constructor, will only call the super-constructor
-     * for ResponseHandlerBase. 
-     * 
-     * @param method The method used for this response
+     * for ResponseHandlerBase.
+     *
+     * @param hresp The hresp used for this response
      */
-    public BasicResponseHandler(HttpMethod method) {
-        super(method);
+    public BasicResponseHandler(CloseableHttpResponse hresp) {
+        super(hresp);
     }
 
     /**
      * Sets the headers, writes the stream and sets the status code.
-     * 
+     *
      * @see net.sf.j2ep.model.ResponseHandler#process(javax.servlet.http.HttpServletResponse)
      */
-    public void process(HttpServletResponse response) throws IOException{
-            setHeaders(response);
-            response.setStatus(getStatusCode());
-            sendStreamToClient(response);
+    public void process(HttpServletResponse response) throws IOException {
+        setHeaders(response);
+        response.setStatus(getStatusCode());
+        sendStreamToClient(response);
     }
 
 }

@@ -16,7 +16,7 @@
 
 package net.sf.j2ep.model;
 
-import org.apache.commons.httpclient.HttpMethod;
+import org.apache.http.client.methods.HttpUriRequest;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
@@ -39,6 +39,6 @@ public interface RequestHandler {
      * @return The method we have created
      * @throws IOException An exception is thrown when there is a problem with the input supplied by the request
      */
-    public HttpMethod process(HttpServletRequest request, String url) throws IOException;
+    public HttpUriRequest process(HttpServletRequest request, String url) throws IOException;
 
 }

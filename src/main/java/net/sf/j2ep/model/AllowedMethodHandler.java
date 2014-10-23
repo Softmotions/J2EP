@@ -16,7 +16,7 @@
 
 package net.sf.j2ep.model;
 
-import org.apache.commons.httpclient.HttpMethod;
+import org.apache.http.client.methods.HttpUriRequest;
 
 import java.util.HashSet;
 import java.util.StringTokenizer;
@@ -85,12 +85,11 @@ public class AllowedMethodHandler {
     /**
      * Checks the method to see if it's allowed
      *
-     * @param method The method that is checked
      * @return true if the method is allowed, false otherwise
      * @see AllowedMethodHandler#methodAllowed(String)
      */
-    public static boolean methodAllowed(HttpMethod method) {
-        return methodAllowed(method.getName());
+    public static boolean methodAllowed(HttpUriRequest hreq) {
+        return (hreq != null && methodAllowed(hreq.getMethod()));
     }
 
     /**
@@ -100,7 +99,7 @@ public class AllowedMethodHandler {
      * @param allowed The list of allowed methods, should be comma separated
      */
     public synchronized static void setAllowedMethods(String allowed) {
-        allowedMethods = new HashSet<String>();
+        allowedMethods = new HashSet<>();
         allowString = allowed;
         StringTokenizer tokenizer = new StringTokenizer(allowed, ",");
         while (tokenizer.hasMoreTokens()) {
@@ -108,5 +107,4 @@ public class AllowedMethodHandler {
             allowedMethods.add(token);
         }
     }
-
 }

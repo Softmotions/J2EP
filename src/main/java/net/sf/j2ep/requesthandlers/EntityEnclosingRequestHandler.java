@@ -16,11 +16,12 @@
 
 package net.sf.j2ep.requesthandlers;
 
-import org.apache.commons.httpclient.HttpMethod;
-import org.apache.commons.httpclient.methods.EntityEnclosingMethod;
-import org.apache.commons.httpclient.methods.InputStreamRequestEntity;
-import org.apache.commons.httpclient.methods.PostMethod;
-import org.apache.commons.httpclient.methods.PutMethod;
+import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.entity.InputStreamEntity;
+import org.apache.http.protocol.HTTP;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
@@ -39,25 +40,24 @@ public class EntityEnclosingRequestHandler extends RequestHandlerBase {
      * @throws IOException An exception is throws when there is a problem getting the input stream
      * @see net.sf.j2ep.model.RequestHandler#process(javax.servlet.http.HttpServletRequest, java.lang.String)
      */
-    public HttpMethod process(HttpServletRequest request, String url) throws IOException {
+    public HttpUriRequest process(HttpServletRequest request, String url) throws IOException {
 
-        EntityEnclosingMethod method;
-
-        if (request.getMethod().equalsIgnoreCase("POST")) {
-            method = new PostMethod(url);
-        } else if (request.getMethod().equalsIgnoreCase("PUT")) {
-            method = new PutMethod(url);
-        } else {
-            return null;
+        HttpEntityEnclosingRequestBase method;
+        String rmethod = request.getMethod().toUpperCase();
+        switch (rmethod) {
+            case "POST":
+                method = new HttpPost(url);
+                break;
+            case "PUT":
+                method = new HttpPut(url);
+                break;
+            default:
+                return null;
         }
-
         setHeaders(method, request);
-
-        InputStreamRequestEntity stream;
-        stream = new InputStreamRequestEntity(request.getInputStream());
-        method.setRequestEntity(stream);
-        method.setRequestHeader("Content-type", request.getContentType());
-
+        method.removeHeaders(HTTP.CONTENT_LEN);
+        method.setEntity(new InputStreamEntity(request.getInputStream()));
+        method.setHeader(HTTP.CONTENT_TYPE, request.getContentType());
         return method;
     }
 }

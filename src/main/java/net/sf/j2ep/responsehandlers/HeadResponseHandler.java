@@ -16,7 +16,7 @@
 
 package net.sf.j2ep.responsehandlers;
 
-import org.apache.commons.httpclient.methods.HeadMethod;
+import org.apache.http.client.methods.CloseableHttpResponse;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -31,10 +31,10 @@ public class HeadResponseHandler extends ResponseHandlerBase {
      * Default constructor, will only call the super-constructor
      * for BasicResponseHandler.
      *
-     * @param method The method used for this response
+     * @param hresp The hresp used for this response
      */
-    public HeadResponseHandler(HeadMethod method) {
-        super(method);
+    public HeadResponseHandler(CloseableHttpResponse hresp) {
+        super(hresp);
     }
 
     /**

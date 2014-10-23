@@ -17,8 +17,7 @@
 package net.sf.j2ep.requesthandlers;
 
 import net.sf.j2ep.model.RequestHandler;
-import org.apache.commons.httpclient.HttpException;
-import org.apache.commons.httpclient.HttpMethod;
+import org.apache.http.client.methods.HttpUriRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,12 +42,12 @@ public abstract class RequestHandlerBase implements RequestHandler {
      * A set of headers that are not to be set in the request,
      * these headers are for example Connection.
      */
-    private static Set<String> bannedHeaders = new HashSet<String>();
+    private static Set<String> bannedHeaders = new HashSet<>();
 
     /**
      * @see net.sf.j2ep.model.RequestHandler#process(javax.servlet.http.HttpServletRequest, java.lang.String)
      */
-    public abstract HttpMethod process(HttpServletRequest request, String url) throws IOException;
+    public abstract HttpUriRequest process(HttpServletRequest request, String url) throws IOException;
 
     /**
      * Logging element supplied by commons-logging.
@@ -64,9 +63,8 @@ public abstract class RequestHandlerBase implements RequestHandler {
      *
      * @param method  The HttpMethod used for this connection
      * @param request The incoming request
-     * @throws HttpException
      */
-    protected void setHeaders(HttpMethod method, HttpServletRequest request) throws HttpException {
+    protected void setHeaders(HttpUriRequest method, HttpServletRequest request) {
         Enumeration headers = request.getHeaderNames();
         String connectionToken = request.getHeader("connection");
 
@@ -77,7 +75,7 @@ public abstract class RequestHandlerBase implements RequestHandler {
             if (!isToken && !bannedHeaders.contains(name.toLowerCase())) {
                 Enumeration value = request.getHeaders(name);
                 while (value.hasMoreElements()) {
-                    method.addRequestHeader(name, (String) value.nextElement());
+                    method.setHeader(name, (String) value.nextElement());
                 }
             }
         }
@@ -90,9 +88,8 @@ public abstract class RequestHandlerBase implements RequestHandler {
      *
      * @param method  Method to write the headers to
      * @param request The incoming request, will need to get virtual host.
-     * @throws HttpException
      */
-    private void setProxySpecificHeaders(HttpMethod method, HttpServletRequest request) throws HttpException {
+    private void setProxySpecificHeaders(HttpUriRequest method, HttpServletRequest request) {
         String serverHostName = "jEasyExtensibleProxy";
         try {
             serverHostName = InetAddress.getLocalHost().getHostName();
@@ -105,18 +102,17 @@ public abstract class RequestHandlerBase implements RequestHandler {
         if (originalVia != null) {
             if (originalVia.contains(serverHostName)) {
                 log.error("This proxy has already handled the request, will abort.");
-                throw new HttpException("Request has a cyclic dependency on this proxy.");
+                throw new RuntimeException("Request has a cyclic dependency on this proxy.");
             }
             via.append(originalVia).append(", ");
         }
         via.append(request.getProtocol()).append(" ").append(serverHostName);
 
-        method.setRequestHeader("via", via.toString());
-        method.setRequestHeader("x-forwarded-for", request.getRemoteAddr());
-        method.setRequestHeader("x-forwarded-host", request.getServerName());
-        method.setRequestHeader("x-forwarded-server", serverHostName);
-
-        method.setRequestHeader("accept-encoding", "");
+        method.setHeader("via", via.toString());
+        method.setHeader("x-forwarded-for", request.getRemoteAddr());
+        method.setHeader("x-forwarded-host", request.getServerName());
+        method.setHeader("x-forwarded-server", serverHostName);
+        method.setHeader("accept-encoding", "");
     }
 
     /**

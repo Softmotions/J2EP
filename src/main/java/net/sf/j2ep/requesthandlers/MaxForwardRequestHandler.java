@@ -16,10 +16,9 @@
 
 package net.sf.j2ep.requesthandlers;
 
-import org.apache.commons.httpclient.HttpMethod;
-import org.apache.commons.httpclient.HttpMethodBase;
-import org.apache.commons.httpclient.methods.OptionsMethod;
-import org.apache.commons.httpclient.methods.TraceMethod;
+import org.apache.http.client.methods.HttpOptions;
+import org.apache.http.client.methods.HttpTrace;
+import org.apache.http.client.methods.HttpUriRequest;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
@@ -40,17 +39,19 @@ public class MaxForwardRequestHandler extends RequestHandlerBase {
      *
      * @see net.sf.j2ep.model.RequestHandler#process(javax.servlet.http.HttpServletRequest, java.lang.String)
      */
-    public HttpMethod process(HttpServletRequest request, String url) throws IOException {
-        HttpMethodBase method;
-
-        if (request.getMethod().equalsIgnoreCase("OPTIONS")) {
-            method = new OptionsMethod(url);
-        } else if (request.getMethod().equalsIgnoreCase("TRACE")) {
-            method = new TraceMethod(url);
-        } else {
-            return null;
+    public HttpUriRequest process(HttpServletRequest request, String url) throws IOException {
+        HttpUriRequest method;
+        String rmethod = request.getMethod().toUpperCase();
+        switch (rmethod) {
+            case "OPTIONS":
+                method = new HttpOptions(url);
+                break;
+            case "TRACE":
+                method = new HttpTrace(url);
+                break;
+            default:
+                return null;
         }
-
         try {
             int max = request.getIntHeader("Max-Forwards");
             if (max == 0 || request.getRequestURI().equals("*")) {
@@ -58,13 +59,12 @@ public class MaxForwardRequestHandler extends RequestHandlerBase {
                 method.abort();
             } else if (max != -1) {
                 setHeaders(method, request);
-                method.setRequestHeader("Max-Forwards", "" + max);
+                method.setHeader("Max-Forwards", "" + max);
             } else {
                 setHeaders(method, request);
             }
         } catch (NumberFormatException ignored) {
         }
-
         return method;
     }
 
@@ -77,19 +77,15 @@ public class MaxForwardRequestHandler extends RequestHandlerBase {
      *
      * @param method  The method to write to
      * @param request The incoming request
-     * @see RequestHandlerBase#setHeaders(HttpMethod, HttpServletRequest)
      */
-    private void setAllHeaders(HttpMethod method, HttpServletRequest request) {
+    private void setAllHeaders(HttpUriRequest method, HttpServletRequest request) {
         Enumeration headers = request.getHeaderNames();
-
         while (headers.hasMoreElements()) {
             String name = (String) headers.nextElement();
             Enumeration value = request.getHeaders(name);
-
             while (value.hasMoreElements()) {
-                method.addRequestHeader(name, (String) value.nextElement());
+                method.setHeader(name, (String) value.nextElement());
             }
-
         }
     }
 }

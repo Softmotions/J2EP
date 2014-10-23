@@ -16,7 +16,7 @@
 
 package net.sf.j2ep.responsehandlers;
 
-import org.apache.commons.httpclient.methods.PostMethod;
+import org.apache.http.client.methods.CloseableHttpResponse;
 
 /**
  * Handler for the POST method.
@@ -24,15 +24,15 @@ import org.apache.commons.httpclient.methods.PostMethod;
  * @author Anders Nyman
  */
 public class PostResponseHandler extends BasicResponseHandler {
-    
+
     /**
      * Default constructor, will only call the super-constructor
-     * for ResponseHandlerBase. 
-     * 
-     * @param method The method used for this response
+     * for ResponseHandlerBase.
+     *
+     * @param hresp The hresp used for this response
      */
-    public PostResponseHandler(PostMethod method) {
-        super(method);
+    public PostResponseHandler(CloseableHttpResponse hresp) {
+        super(hresp);
     }
 
 }

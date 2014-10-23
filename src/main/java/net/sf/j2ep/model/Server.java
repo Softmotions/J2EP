@@ -86,4 +86,5 @@ public interface Server {
      * @return The rule we are mapped to
      */
     Rule getRule();
+
 }

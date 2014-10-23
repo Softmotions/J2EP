@@ -17,14 +17,9 @@
 package net.sf.j2ep.servers;
 
 import net.sf.j2ep.model.Server;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.cookie.CookiePolicy;
-import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.commons.httpclient.params.HttpClientParams;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Iterator;
 import java.util.LinkedList;
 
 /**
@@ -48,8 +43,9 @@ public class ServerStatusChecker extends Thread {
 
     /**
      * Client used to make the connections.
+     * todo
      */
-    private HttpClient httpClient;
+    //private HttpClient httpClient;
 
     /**
      * The listener we notify when a servers status changes.
@@ -82,9 +78,12 @@ public class ServerStatusChecker extends Thread {
 
         online = new LinkedList<Server>();
         offline = new LinkedList<Server>();
-        httpClient = new HttpClient();
+
+
+        //todo!!!
+        /*httpClient = new HttpClient();
         httpClient.getParams().setBooleanParameter(HttpClientParams.USE_EXPECT_CONTINUE, false);
-        httpClient.getParams().setCookiePolicy(CookiePolicy.IGNORE_COOKIES);
+        httpClient.getParams().setCookiePolicy(CookiePolicy.IGNORE_COOKIES);*/
     }
 
     /**
@@ -109,7 +108,8 @@ public class ServerStatusChecker extends Thread {
      * if they still are online.
      */
     private synchronized void checkOnlineServers() {
-        Iterator itr;
+        //todo
+      /*  Iterator itr;
         itr = online.listIterator();
         while (itr.hasNext()) {
             Server server = (Server) itr.next();
@@ -133,7 +133,7 @@ public class ServerStatusChecker extends Thread {
             } finally {
                 get.releaseConnection();
             }
-        }
+        }*/
     }
 
     /**
@@ -141,7 +141,8 @@ public class ServerStatusChecker extends Thread {
      * again.
      */
     private synchronized void checkOfflineServers() {
-        Iterator itr = offline.listIterator();
+        //todo
+        /*Iterator itr = offline.listIterator();
         while (itr.hasNext()) {
             Server server = (Server) itr.next();
             String url = getServerURL(server);
@@ -161,7 +162,7 @@ public class ServerStatusChecker extends Thread {
             } finally {
                 get.releaseConnection();
             }
-        }
+        }*/
     }
 
     /**

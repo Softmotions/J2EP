@@ -16,7 +16,7 @@
 
 package net.sf.j2ep.responsehandlers;
 
-import org.apache.commons.httpclient.methods.PutMethod;
+import org.apache.http.client.methods.CloseableHttpResponse;
 
 /**
  * Handler for the PUT method.
@@ -28,10 +28,10 @@ public class PutResponseHandler extends BasicResponseHandler {
     /**
      * Default constructor, will only call the super-constructor
      * for ResponseHandlerBase. 
-     * 
-     * @param method The method used for this response
+     *
+     * @param hresp The hresp used for this response
      */
-    public PutResponseHandler(PutMethod method) {
-        super(method);
+    public PutResponseHandler(CloseableHttpResponse hresp) {
+        super(hresp);
     }
 }

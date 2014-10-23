@@ -16,7 +16,7 @@
 
 package net.sf.j2ep.responsehandlers;
 
-import org.apache.commons.httpclient.methods.GetMethod;
+import org.apache.http.client.methods.CloseableHttpResponse;
 
 /**
  * Handler for the GET method.
@@ -24,15 +24,15 @@ import org.apache.commons.httpclient.methods.GetMethod;
  * @author Anders Nyman
  */
 public class GetResponseHandler extends BasicResponseHandler {
-    
+
     /**
      * Default constructor, will only call the super-constructor
-     * for BasicResponseHandler. 
-     * 
-     * @param method The method used for this response
+     * for BasicResponseHandler.
+     *
+     * @param resp The resp used for this response
      */
-    public GetResponseHandler(GetMethod method) {
-        super(method);
+    public GetResponseHandler(CloseableHttpResponse resp) {
+        super(resp);
     }
 
 }

@@ -23,14 +23,21 @@ import net.sf.j2ep.model.AllowedMethodHandler;
 import net.sf.j2ep.model.RequestHandler;
 import net.sf.j2ep.model.ResponseHandler;
 import net.sf.j2ep.model.Server;
-import org.apache.commons.httpclient.Header;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpException;
-import org.apache.commons.httpclient.HttpMethod;
-import org.apache.commons.httpclient.HttpMethodBase;
-import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
-import org.apache.commons.httpclient.cookie.CookiePolicy;
-import org.apache.commons.httpclient.params.HttpClientParams;
+import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.http.Header;
+import org.apache.http.StatusLine;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.impl.DefaultConnectionReuseStrategy;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.client.cache.CacheConfig;
+import org.apache.http.impl.client.cache.CachingHttpClientBuilder;
+import org.apache.http.protocol.HTTP;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,86 +52,85 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
 import java.net.UnknownHostException;
+import java.util.Arrays;
 
 /**
  * A reverse proxy using a set of Rules to identify which resource to proxy.
- * 
+ * <p/>
  * At first the rule chain is traversed trying to find a matching rule.
  * When the rule is found it is given the option to rewrite the URL.
  * The rewritten URL is then sent to a Server creating a Response Handler
  * that can be used to process the response with streams and headers.
- * 
+ * <p/>
  * The rules and servers are created dynamically and are specified in the
  * XML data file. This allows the proxy to be easily extended by creating
  * new rules and new servers.
- * 
+ *
  * @author Anders Nyman
  */
 public class ProxyFilter implements Filter {
 
-    /** 
+    /**
      * The server chain, will be traversed to find a matching server.
      */
     private ServerChain serverChain;
-    
-    /** 
+
+    /**
      * Logging element supplied by commons-logging.
      */
     private static Logger log;
-    
-    /** 
+
+    /**
      * The httpclient used to make all connections with, supplied by commons-httpclient.
      */
-    private HttpClient httpClient;
+    private CloseableHttpClient httpClient;
 
     /**
      * Implementation of a reverse-proxy. All request go through here. This is
      * the main class where are handling starts.
-     * 
+     *
      * @see javax.servlet.Filter#doFilter(javax.servlet.ServletRequest,
-     *      javax.servlet.ServletResponse, javax.servlet.FilterChain)
+     * javax.servlet.ServletResponse, javax.servlet.FilterChain)
      */
     public void doFilter(ServletRequest request, ServletResponse response,
-            FilterChain filterChain) throws IOException, ServletException {
+                         FilterChain filterChain) throws IOException, ServletException {
 
         HttpServletResponse httpResponse = (HttpServletResponse) response;
         HttpServletRequest httpRequest = (HttpServletRequest) request;
 
-        Server server = (Server) httpRequest.getAttribute("proxyServer");  
+        Server server = (Server) httpRequest.getAttribute("proxyServer");
         if (server == null) {
             server = serverChain.evaluate(httpRequest);
         }
-        
         if (server == null) {
             filterChain.doFilter(request, response);
         } else {
             String uri = server.getRule().process(getURI(httpRequest));
             String url = request.getScheme() + "://" + server.getDomainName() + server.getPath() + uri;
-            if (log.isDebugEnabled()) log.debug("Connecting to " + url);
-            
+            //if (log.isDebugEnabled()) log.debug("Connecting to " + url);
+
             ResponseHandler responseHandler = null;
-            
             try {
                 httpRequest = server.preExecute(httpRequest);
-                responseHandler = executeRequest(httpRequest, url);
+                responseHandler = executeRequest(server, httpRequest, url);
                 httpResponse = server.postExecute(httpResponse);
-
                 responseHandler.process(httpResponse);
-            } catch (HttpException e) {
-                log.error("Problem while connecting to server", e);
-                httpResponse.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                server.setConnectionExceptionRecieved(e);
+
             } catch (UnknownHostException e) {
                 log.error("Could not connection to the host specified", e);
                 httpResponse.setStatus(HttpServletResponse.SC_GATEWAY_TIMEOUT);
                 server.setConnectionExceptionRecieved(e);
             } catch (IOException e) {
-                log.error( "Problem probably with the input being send, either with a Header or the Stream", e);
-                httpResponse .setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                log.error("Problem probably with the input being send, either with a Header or the Stream", e);
+                httpResponse.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             } catch (MethodNotAllowedException e) {
                 log.error("Incoming method could not be handled", e);
                 httpResponse.setStatus(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
                 httpResponse.setHeader("Allow", e.getAllowedMethods());
+            } catch (Exception e) {
+                log.error("Problem while connecting to server", e);
+                httpResponse.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                server.setConnectionExceptionRecieved(e);
             } finally {
                 if (responseHandler != null) {
                     responseHandler.close();
@@ -132,11 +138,11 @@ public class ProxyFilter implements Filter {
             }
         }
     }
-    
+
     /**
      * Will build a URI but including the Query String. That means that it really
      * isn't a URI, but quite near.
-     * 
+     *
      * @param httpRequest Request to get the URI and query string from
      * @return The URI for this request including the query string
      */
@@ -152,82 +158,139 @@ public class ProxyFilter implements Filter {
     /**
      * Will create the method and execute it. After this the method
      * is sent to a ResponseHandler that is returned.
-     * 
-     * @param httpRequest Request we are receiving from the client
+     *
+     * @param req Request we are receiving from the client
      * @param url The location we are proxying to
      * @return A ResponseHandler that can be used to write the response
      * @throws MethodNotAllowedException If the method specified by the request isn't handled
-     * @throws IOException When there is a problem with the streams
-     * @throws HttpException The httpclient can throw HttpExcetion when executing the method
+     * @throws IOException               When there is a problem with the streams
      */
-    private ResponseHandler executeRequest(HttpServletRequest httpRequest,
-            String url) throws MethodNotAllowedException, IOException,
-            HttpException {
-        RequestHandler requestHandler = RequestHandlerFactory
-                .createRequestMethod(httpRequest.getMethod());
+    private ResponseHandler executeRequest(Server server, HttpServletRequest req, String url) throws MethodNotAllowedException, IOException {
+        RequestHandler requestHandler = RequestHandlerFactory.createRequestMethod(req.getMethod());
+        HttpUriRequest hreq = requestHandler.process(req, url);
+        if (!AllowedMethodHandler.methodAllowed(hreq)) {
+            throw new MethodNotAllowedException("The method " + req.getMethod() + " is not in the AllowedHeaderHandler's list of allowed methods.", AllowedMethodHandler.getAllowHeader());
+        }
+        hreq.setHeader(HTTP.TARGET_HOST, server.getDomainName());
+        if (log.isDebugEnabled()) log.debug("" + hreq + " H=" + Arrays.asList(hreq.getAllHeaders()));
+        ResponseHandler rh = null;
+        CloseableHttpResponse hresp = null;
+        try {
+            HttpClientContext ctx = HttpClientContext.create();
+            hresp = httpClient.execute(hreq, ctx);
+            StatusLine sline = hresp.getStatusLine();
+            //log.info("sline=" + sline);
+            //log.info("h=" + Arrays.asList(hreq.getAllHeaders()));
 
-        HttpMethod method = requestHandler.process(httpRequest, url);
-        method.setFollowRedirects(false);
-
-        /*
-         * Why does method.validate() return true when the method has been
-         * aborted? I mean, if validate returns true the API says that means
-         * that the method is ready to be executed. 
-         * TODO I don't like doing type casting here, see above.
-         */
-        if (!((HttpMethodBase) method).isAborted()) {
-            httpClient.executeMethod(method);
-
-            if (method.getStatusCode() == 405) {
-                Header allow = method.getResponseHeader("allow");
+            if (sline.getStatusCode() == 405) {
+                Header allow = hreq.getFirstHeader("allow");
                 String value = allow.getValue();
-                throw new MethodNotAllowedException(
-                        "Status code 405 from server", AllowedMethodHandler
-                                .processAllowHeader(value));
+                throw new MethodNotAllowedException("Status code 405 from server", AllowedMethodHandler.processAllowHeader(value));
+            }
+            rh = ResponseHandlerFactory.createResponseHandler(hresp, hreq, ctx);
+        } finally {
+            if (rh == null && hresp != null) {
+                hresp.close();
             }
         }
-
-        return ResponseHandlerFactory.createResponseHandler(method);
+        return rh;
     }
 
     /**
      * @see javax.servlet.Filter#init(javax.servlet.FilterConfig)
-     * 
+     * <p/>
      * Called upon initialization, Will create the ConfigParser and get the
      * RuleChain back. Will also configure the httpclient.
      */
-    public void init(FilterConfig filterConfig) throws ServletException {
+    public void init(FilterConfig cfg) throws ServletException {
         log = LoggerFactory.getLogger(ProxyFilter.class);
         AllowedMethodHandler.setAllowedMethods("OPTIONS,GET,HEAD,POST,PUT,DELETE,TRACE");
 
-        MultiThreadedHttpConnectionManager cm = new MultiThreadedHttpConnectionManager();
-        httpClient = new HttpClient(cm);
-        cm.getParams().setDefaultMaxConnectionsPerHost(10);
-        cm.getParams().setMaxTotalConnections(30);
-        httpClient.getParams().setBooleanParameter(HttpClientParams.USE_EXPECT_CONTINUE, false);
-        httpClient.getParams().setCookiePolicy(CookiePolicy.IGNORE_COOKIES);
-        
-        String data = filterConfig.getInitParameter("dataUrl");
+        HttpClientBuilder builder;
+
+        if (BooleanUtils.toBoolean(cfg.getInitParameter("cache"))) {
+            CachingHttpClientBuilder cb = CachingHttpClientBuilder.create();
+            builder = cb;
+            String val = cfg.getInitParameter("cacheDir");
+            if (!StringUtils.isBlank(val)) {
+                File cacheDir = new File(val);
+                if (!cacheDir.exists()) {
+                    cacheDir.mkdir();
+                }
+                if (!cacheDir.exists() || !cacheDir.canWrite()) {
+                    throw new ServletException("Failed to setup cache directory: " + cacheDir);
+                }
+                cb.setCacheDir(cacheDir);
+            }
+            CacheConfig.Builder cc = CacheConfig.custom();
+            val = cfg.getInitParameter("maxCacheEntries");
+            if (!StringUtils.isBlank("maxCacheEntries")) {
+                cc.setMaxCacheEntries(Integer.parseInt(val));
+            }
+            val = cfg.getInitParameter("maxCacheEntitySize");
+            if (!StringUtils.isBlank("maxCacheEntitySize")) {
+                cc.setMaxObjectSize(Integer.parseInt(val));
+            }
+            if (BooleanUtils.toBoolean(cfg.getInitParameter("useHeuristicCaching"))) {
+                cc.setHeuristicCachingEnabled(true);
+            }
+            cb.setCacheConfig(cc.build());
+        } else {
+            builder = HttpClientBuilder.create();
+        }
+
+        httpClient = builder
+                .setDefaultRequestConfig(RequestConfig.custom()
+                                                 .setConnectionRequestTimeout(NumberUtils.toInt(cfg.getInitParameter("connectionRequestTimeout"), 1000))
+                                                 .setConnectTimeout(NumberUtils.toInt(cfg.getInitParameter("connectTimeout"), 1000))
+                                                 .setSocketTimeout(NumberUtils.toInt(cfg.getInitParameter("socketTimeout"), 10000))
+                                                 .setAuthenticationEnabled(false)
+                                                 .setCircularRedirectsAllowed(false)
+                                                 .setRedirectsEnabled(false)
+                                                 .setRelativeRedirectsAllowed(false)
+                                                 .setStaleConnectionCheckEnabled(false)
+                                                 .setExpectContinueEnabled(false)
+                                                 .build())
+                .setMaxConnPerRoute(NumberUtils.toInt(cfg.getInitParameter("maxConnPerRoute"), 10))
+                .setMaxConnTotal(NumberUtils.toInt(cfg.getInitParameter("maxConnTotal"), 100))
+                .setConnectionReuseStrategy(DefaultConnectionReuseStrategy.INSTANCE)
+                .disableCookieManagement()
+                .disableAuthCaching()
+                .disableAutomaticRetries()
+                .disableRedirectHandling()
+                .disableContentCompression()
+                .build();
+
+
+        //httpClient.//removeRequestInterceptorByClass(org.apache.http.protocol.RequestContent.class);
+
+
+        String data = cfg.getInitParameter("dataUrl");
         if (data == null) {
             serverChain = null;
         } else {
             try {
-                File dataFile = new File(filterConfig.getServletContext().getRealPath(data));
+                File dataFile = new File(cfg.getServletContext().getRealPath(data));
                 ConfigParser parser = new ConfigParser(dataFile);
-                serverChain = parser.getServerChain();               
+                serverChain = parser.getServerChain();
             } catch (Exception e) {
                 throw new ServletException(e);
-            } 
+            }
         }
     }
 
     /**
      * @see javax.servlet.Filter#destroy()
-     * 
+     * <p/>
      * Called when this filter is destroyed.
      * Releases the fields.
      */
     public void destroy() {
+        try {
+            httpClient.close();
+        } catch (IOException e) {
+            log.error("", e);
+        }
         log = null;
         httpClient = null;
         serverChain = null;

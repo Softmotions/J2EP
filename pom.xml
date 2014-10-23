@@ -67,11 +67,26 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
-            <groupId>commons-httpclient</groupId>
-            <artifactId>commons-httpclient</artifactId>
-            <version>3.1</version>
-            <scope>compile</scope>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.3.5</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient-cache</artifactId>
+            <version>4.3.5</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.3.2</version>
+        </dependency>
+        <!-- <dependency>
+             <groupId>commons-httpclient</groupId>
+             <artifactId>commons-httpclient</artifactId>
+             <version>3.1</version>
+             <scope>compile</scope>
+         </dependency>-->
         <!--<dependency>
             <groupId>net.sf.ehcache</groupId>
             <artifactId>ehcache</artifactId>

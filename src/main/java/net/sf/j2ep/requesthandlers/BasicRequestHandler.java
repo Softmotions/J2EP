@@ -16,12 +16,10 @@
 
 package net.sf.j2ep.requesthandlers;
 
-import org.apache.commons.httpclient.HttpException;
-import org.apache.commons.httpclient.HttpMethod;
-import org.apache.commons.httpclient.HttpMethodBase;
-import org.apache.commons.httpclient.methods.DeleteMethod;
-import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.commons.httpclient.methods.HeadMethod;
+import org.apache.http.client.methods.HttpDelete;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpHead;
+import org.apache.http.client.methods.HttpUriRequest;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -37,23 +35,24 @@ public class BasicRequestHandler extends RequestHandlerBase {
     /**
      * Will only set the headers.
      *
-     * @throws HttpException
      * @see net.sf.j2ep.model.RequestHandler#process(javax.servlet.http.HttpServletRequest, java.lang.String)
      */
-    public HttpMethod process(HttpServletRequest request, String url) throws HttpException {
-
-        HttpMethodBase method;
-
-        if (request.getMethod().equalsIgnoreCase("GET")) {
-            method = new GetMethod(url);
-        } else if (request.getMethod().equalsIgnoreCase("HEAD")) {
-            method = new HeadMethod(url);
-        } else if (request.getMethod().equalsIgnoreCase("DELETE")) {
-            method = new DeleteMethod(url);
-        } else {
-            return null;
+    public HttpUriRequest process(HttpServletRequest request, String url) {
+        String rmethod = request.getMethod().toUpperCase();
+        HttpUriRequest method;
+        switch (rmethod) {
+            case "GET":
+                method = new HttpGet(url);
+                break;
+            case "HEAD":
+                method = new HttpHead(url);
+                break;
+            case "DELETE":
+                method = new HttpDelete(url);
+                break;
+            default:
+                return null;
         }
-
         setHeaders(method, request);
         return method;
     }

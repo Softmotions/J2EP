@@ -16,7 +16,6 @@
 
 package net.sf.j2ep.factories;
 
-import net.sf.j2ep.model.AllowedMethodHandler;
 import net.sf.j2ep.model.ResponseHandler;
 import net.sf.j2ep.responsehandlers.DeleteResponseHandler;
 import net.sf.j2ep.responsehandlers.GetResponseHandler;
@@ -25,14 +24,9 @@ import net.sf.j2ep.responsehandlers.OptionsResponseHandler;
 import net.sf.j2ep.responsehandlers.PostResponseHandler;
 import net.sf.j2ep.responsehandlers.PutResponseHandler;
 import net.sf.j2ep.responsehandlers.TraceResponseHandler;
-import org.apache.commons.httpclient.HttpMethod;
-import org.apache.commons.httpclient.methods.DeleteMethod;
-import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.commons.httpclient.methods.HeadMethod;
-import org.apache.commons.httpclient.methods.OptionsMethod;
-import org.apache.commons.httpclient.methods.PostMethod;
-import org.apache.commons.httpclient.methods.PutMethod;
-import org.apache.commons.httpclient.methods.TraceMethod;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.client.protocol.HttpClientContext;
 
 /**
  * A factory creating ResponseHandlers.
@@ -50,37 +44,41 @@ public class ResponseHandlerFactory {
     private static final String handledMethods = "OPTIONS,GET,HEAD,POST,PUT,DELETE,TRACE";
 
     /**
-     * Checks the method being received and created a
-     * suitable ResponseHandler for this method.
+     * Checks the hresp being received and created a
+     * suitable ResponseHandler for this hresp.
      *
-     * @param method Method to handle
+     * @param hresp Method to handle
      * @return The handler for this response
-     * @throws MethodNotAllowedException If no method could be choose this exception is thrown
+     * @throws MethodNotAllowedException If no hresp could be choose this exception is thrown
      */
-    public static ResponseHandler createResponseHandler(HttpMethod method) throws MethodNotAllowedException {
-        if (!AllowedMethodHandler.methodAllowed(method)) {
-            throw new MethodNotAllowedException("The method " + method.getName() + " is not in the AllowedHeaderHandler's list of allowed methods.", AllowedMethodHandler.getAllowHeader());
-        }
-
+    public static ResponseHandler createResponseHandler(CloseableHttpResponse hresp, HttpUriRequest hreq, HttpClientContext ctx) throws MethodNotAllowedException {
+        final String method = hreq.getMethod();
         ResponseHandler handler;
-        if (method.getName().equals("OPTIONS")) {
-            handler = new OptionsResponseHandler((OptionsMethod) method);
-        } else if (method.getName().equals("GET")) {
-            handler = new GetResponseHandler((GetMethod) method);
-        } else if (method.getName().equals("HEAD")) {
-            handler = new HeadResponseHandler((HeadMethod) method);
-        } else if (method.getName().equals("POST")) {
-            handler = new PostResponseHandler((PostMethod) method);
-        } else if (method.getName().equals("PUT")) {
-            handler = new PutResponseHandler((PutMethod) method);
-        } else if (method.getName().equals("DELETE")) {
-            handler = new DeleteResponseHandler((DeleteMethod) method);
-        } else if (method.getName().equals("TRACE")) {
-            handler = new TraceResponseHandler((TraceMethod) method);
-        } else {
-            throw new MethodNotAllowedException("The method " + method.getName() + " was allowed by the AllowedMethodHandler, not by the factory.", handledMethods);
+        switch (method) {
+            case "OPTIONS":
+                handler = new OptionsResponseHandler(hresp, hreq);
+                break;
+            case "GET":
+                handler = new GetResponseHandler(hresp);
+                break;
+            case "HEAD":
+                handler = new HeadResponseHandler(hresp);
+                break;
+            case "POST":
+                handler = new PostResponseHandler(hresp);
+                break;
+            case "PUT":
+                handler = new PutResponseHandler(hresp);
+                break;
+            case "DELETE":
+                handler = new DeleteResponseHandler(hresp);
+                break;
+            case "TRACE":
+                handler = new TraceResponseHandler(hresp, hreq);
+                break;
+            default:
+                throw new MethodNotAllowedException("The hresp " + method + " was allowed by the AllowedMethodHandler, not by the factory.", handledMethods);
         }
-
         return handler;
     }
 }

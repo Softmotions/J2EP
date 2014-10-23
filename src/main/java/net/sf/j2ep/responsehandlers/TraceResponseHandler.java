@@ -16,12 +16,13 @@
 
 package net.sf.j2ep.responsehandlers;
 
-import org.apache.commons.httpclient.Header;
-import org.apache.commons.httpclient.methods.TraceMethod;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpUriRequest;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Iterator;
 
 /**
  * A handler for the TRACE method. This handler will make
@@ -33,6 +34,8 @@ import java.io.PrintWriter;
  */
 public class TraceResponseHandler extends ResponseHandlerBase {
 
+    final HttpUriRequest hreq;
+
     /**
      * Set a construction to indicate if the request is directed to the
      * proxy directly by using Max-Forwards: 0 or using URI *.
@@ -40,14 +43,15 @@ public class TraceResponseHandler extends ResponseHandlerBase {
     private boolean proxyTargeted;
 
     /**
-     * Basic constructor setting the method, and also checks if
+     * Basic constructor setting the hresp, and also checks if
      * the request is targeted to the proxy or the underlying server.
      *
-     * @param method The http method
+     * @param hresp The http hresp
      */
-    public TraceResponseHandler(TraceMethod method) {
-        super(method);
-        proxyTargeted = !method.hasBeenUsed();
+    public TraceResponseHandler(CloseableHttpResponse hresp, HttpUriRequest hreq) {
+        super(hresp);
+        this.hreq = hreq;
+        this.proxyTargeted = hreq.isAborted();
     }
 
     /**
@@ -57,23 +61,21 @@ public class TraceResponseHandler extends ResponseHandlerBase {
      * @see net.sf.j2ep.model.ResponseHandler#process(javax.servlet.http.HttpServletResponse)
      */
     public void process(HttpServletResponse response) throws IOException {
-
         if (proxyTargeted) {
             response.setStatus(HttpServletResponse.SC_OK);
             response.setHeader("content-type", "message/http");
             response.setHeader("Connection", "close");
 
-            String path = method.getPath();
-            String protocol = method.getParams().getVersion().toString();
+            String path = hreq.getURI().getPath();
+            String protocol = hresp.getProtocolVersion().toString();
             PrintWriter writer = response.getWriter();
             writer.println("TRACE " + path + " " + protocol);
-            Header[] headers = method.getRequestHeaders();
-            for (Header header : headers) {
-                writer.print(header);
+            Iterator headers = hresp.headerIterator();
+            while (headers.hasNext()) {
+                writer.print(headers.next());
             }
             writer.flush();
             writer.close();
-
         } else {
             setHeaders(response);
             response.setStatus(getStatusCode());

@@ -47,6 +47,6 @@ public interface ResponseHandler {
     /**
      * Do any actions needed when we wont need the ResponseHandler any more.
      */
-    public void close();
+    public void close() throws IOException;
 
 }

@@ -212,6 +212,7 @@ public abstract class ClusterContainer extends ServerContainerBase implements Se
      */
     protected class ClusteredServer implements Server {
 
+
         /**
          * The domain name mapping
          */

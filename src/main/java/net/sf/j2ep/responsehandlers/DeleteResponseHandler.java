@@ -16,7 +16,7 @@
 
 package net.sf.j2ep.responsehandlers;
 
-import org.apache.commons.httpclient.methods.DeleteMethod;
+import org.apache.http.client.methods.CloseableHttpResponse;
 
 /**
  * Handler for the DELETE method.
@@ -24,15 +24,15 @@ import org.apache.commons.httpclient.methods.DeleteMethod;
  * @author Anders Nyman
  */
 public class DeleteResponseHandler extends BasicResponseHandler {
-    
+
     /**
      * Default constructor, will only call the super-constructor
-     * for BasicResponseHandler. 
-     * 
-     * @param method The method used for this response
+     * for BasicResponseHandler.
+     *
+     * @param hresp The hresp used for this response
      */
-    public DeleteResponseHandler(DeleteMethod method) {
-        super(method);
+    public DeleteResponseHandler(CloseableHttpResponse hresp) {
+        super(hresp);
     }
 
 }

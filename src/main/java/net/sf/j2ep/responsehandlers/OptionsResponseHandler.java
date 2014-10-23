@@ -17,8 +17,9 @@
 package net.sf.j2ep.responsehandlers;
 
 import net.sf.j2ep.model.AllowedMethodHandler;
-import org.apache.commons.httpclient.Header;
-import org.apache.commons.httpclient.methods.OptionsMethod;
+import org.apache.http.Header;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpUriRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,12 +50,10 @@ public class OptionsResponseHandler extends ResponseHandlerBase {
     /**
      * Constructor checking if we should handle the Allow header
      * ourself or respond with the backing servers header.
-     *
-     * @param method The method for this response
      */
-    public OptionsResponseHandler(OptionsMethod method) {
-        super(method);
-        useOwnAllow = !method.hasBeenUsed();
+    public OptionsResponseHandler(CloseableHttpResponse hresp, HttpUriRequest hreq) {
+        super(hresp);
+        useOwnAllow = hreq.isAborted();
     }
 
     /**
@@ -75,9 +74,9 @@ public class OptionsResponseHandler extends ResponseHandlerBase {
         } else {
             setHeaders(response);
             response.setStatus(getStatusCode());
-            String allow = method.getResponseHeader("allow").getValue();
+            String allow = hresp.getFirstHeader("allow").getValue();
             response.setHeader("allow", AllowedMethodHandler.processAllowHeader(allow));
-            Header contentLength = method.getResponseHeader("Content-Length");
+            Header contentLength = hresp.getFirstHeader("Content-Length");
             if (contentLength == null || contentLength.getValue().equals("0")) {
                 response.setHeader("Content-Length", "0");
             } else {
@@ -98,7 +97,7 @@ public class OptionsResponseHandler extends ResponseHandlerBase {
      * @see net.sf.j2ep.model.ResponseHandler#getStatusCode()
      */
     public int getStatusCode() {
-        if (useOwnAllow) {
+        if (hresp != null) {
             return 200;
         } else {
             return super.getStatusCode();
