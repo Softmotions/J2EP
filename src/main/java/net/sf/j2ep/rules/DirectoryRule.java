@@ -16,13 +16,17 @@
 
 package net.sf.j2ep.rules;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.servlet.http.HttpServletRequest;
+import java.util.regex.Pattern;
 
 /**
  * A rule that will check the start of the URI for a specifed
  * starting directory/directories. If the directory is at the start this
  * rule matches. The process method will then remove this directory
- * from the URI, making it easy to map various servers to directory 
+ * from the URI, making it easy to map various servers to directory
  * structures.
  * If one needs some more advanced types of rewriting use the RewriteRule.
  *
@@ -30,11 +34,13 @@ import javax.servlet.http.HttpServletRequest;
  */
 public class DirectoryRule extends BaseRule {
 
-    /** 
+    private static final Logger log = LoggerFactory.getLogger(DirectoryRule.class);
+
+    /**
      * The directory structure.
      */
     private String directory;
-    
+
     /**
      * Sets the directory structure that will
      * be mapped to a specified server.
@@ -65,31 +71,31 @@ public class DirectoryRule extends BaseRule {
     public String getDirectory() {
         return directory;
     }
-    
+
     /**
      * Will see if the directory for the incoming URI is the same
      * as this rule is set to match on.
-     * 
+     *
      * @see net.sf.j2ep.model.Rule#matches(javax.servlet.http.HttpServletRequest)
      */
     public boolean matches(HttpServletRequest request) {
         String uri = request.getServletPath();
         return (uri.startsWith(directory));
     }
-    
+
     /**
      * Removes the specified mapping directory from the URI.
-     * 
+     *
      * @see net.sf.j2ep.model.Rule#process(java.lang.String)
      */
     public String process(String uri) {
-        return uri.substring(directory.length()-1);
+        return uri.substring(directory.length() - 1);
     }
-    
+
     /**
      * Does the opposite of process. revert(String URI) will add the directory
      * specified to the start of the incoming URI.
-     * 
+     *
      * @see net.sf.j2ep.model.Rule#revert(java.lang.String)
      */
     public String revert(String uri) {
