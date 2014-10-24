@@ -18,10 +18,12 @@ package net.sf.j2ep.responsehandlers;
 
 import net.sf.j2ep.model.ResponseHandler;
 import net.sf.j2ep.requesthandlers.RequestHandlerBase;
+import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.servlet.ServletResponse;
@@ -40,6 +42,8 @@ import java.util.Iterator;
  * @author Anders Nyman, Daniel Deng
  */
 public abstract class ResponseHandlerBase implements ResponseHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(ResponseHandlerBase.class);
 
     /**
      * Method we are using for this request.
@@ -93,12 +97,8 @@ public abstract class ResponseHandlerBase implements ResponseHandler {
                 OutputStream responseStream = resp.getOutputStream();
         ) {
             if (streamFromServer != null) {
-                byte[] buffer = new byte[4096];
-                int read = streamFromServer.read(buffer);
-                while (read > 0) {
-                    responseStream.write(buffer, 0, read);
-                    read = streamFromServer.read(buffer);
-                }
+                IOUtils.copyLarge(streamFromServer, responseStream);
+                responseStream.flush();
             }
         }
     }
