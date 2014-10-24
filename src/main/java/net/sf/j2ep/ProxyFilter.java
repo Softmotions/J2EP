@@ -26,10 +26,12 @@ import net.sf.j2ep.model.Rule;
 import net.sf.j2ep.model.Server;
 import net.sf.j2ep.rules.DirectoryRule;
 import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.http.Header;
 import org.apache.http.StatusLine;
+import org.apache.http.client.cache.HttpCacheStorage;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpUriRequest;
@@ -53,8 +55,12 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.net.UnknownHostException;
 import java.util.Arrays;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * A reverse proxy using a set of Rules to identify which resource to proxy.
@@ -145,19 +151,19 @@ public class ProxyFilter implements Filter {
             responseHandler.process(httpResponse);
 
         } catch (UnknownHostException e) {
-            log.error("Could not connection to the host specified", e);
-            httpResponse.setStatus(HttpServletResponse.SC_GATEWAY_TIMEOUT);
+            log.warn("Could not connection to the host specified. " + e);
+            httpResponse.sendError(HttpServletResponse.SC_GATEWAY_TIMEOUT);
             server.setConnectionExceptionRecieved(e);
         } catch (IOException e) {
-            log.error("Problem probably with the input being send, either with a Header or the Stream", e);
-            httpResponse.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            log.warn("Problem probably with the input being send, either with a Header or the Stream. " + e);
+            httpResponse.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         } catch (MethodNotAllowedException e) {
-            log.error("Incoming method could not be handled", e);
-            httpResponse.setStatus(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
+            log.warn("Incoming method could not be handled. " + e);
             httpResponse.setHeader("Allow", e.getAllowedMethods());
+            httpResponse.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
         } catch (Exception e) {
-            log.error("Problem while connecting to server", e);
-            httpResponse.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            log.warn("Problem while connecting to server" + e);
+            httpResponse.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             server.setConnectionExceptionRecieved(e);
         } finally {
             if (responseHandler != null) {
@@ -249,19 +255,47 @@ public class ProxyFilter implements Filter {
                 }
                 cb.setCacheDir(cacheDir);
             }
+
             CacheConfig.Builder cc = CacheConfig.custom();
             val = cfg.getInitParameter("maxCacheEntries");
-            if (!StringUtils.isBlank("maxCacheEntries")) {
+            if (!StringUtils.isBlank(val)) {
                 cc.setMaxCacheEntries(Integer.parseInt(val));
             }
             val = cfg.getInitParameter("maxCacheEntitySize");
-            if (!StringUtils.isBlank("maxCacheEntitySize")) {
+            if (!StringUtils.isBlank(val)) {
                 cc.setMaxObjectSize(Integer.parseInt(val));
             }
             if (BooleanUtils.toBoolean(cfg.getInitParameter("useHeuristicCaching"))) {
                 cc.setHeuristicCachingEnabled(true);
             }
-            cb.setCacheConfig(cc.build());
+            CacheConfig cConf = cc.build();
+            cb.setCacheConfig(cConf);
+            val = cfg.getInitParameter("httpCacheStorage");
+            if (!StringUtils.isBlank(val)) {
+                HttpCacheStorage cs = null;
+                ClassLoader cl = ObjectUtils.firstNonNull(Thread.currentThread().getContextClassLoader(),
+                                                          getClass().getClassLoader());
+                try {
+                    Class<?> csClass = cl.loadClass(val);
+                    Constructor<?> constructor = null;
+                    try {
+                        constructor = csClass.getConstructor(Map.class, CacheConfig.class);
+                        Map props = new HashMap();
+                        Enumeration<String> pnames = cfg.getInitParameterNames();
+                        while (pnames.hasMoreElements()) {
+                            String pname = pnames.nextElement();
+                            props.put(pname, cfg.getInitParameter(pname));
+                        }
+                        cs = (HttpCacheStorage) constructor.newInstance(props, cConf);
+                    } catch (NoSuchMethodException ignored) {
+                        cs = (HttpCacheStorage) csClass.newInstance();
+                    }
+                } catch (Exception e) {
+                    throw new ServletException(e);
+                }
+                log.info("Using cache HttpCacheStorage: " + cs);
+                cb.setHttpCacheStorage(cs);
+            }
         } else {
             builder = HttpClientBuilder.create();
         }
