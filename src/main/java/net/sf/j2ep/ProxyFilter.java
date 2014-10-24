@@ -152,18 +152,26 @@ public class ProxyFilter implements Filter {
 
         } catch (UnknownHostException e) {
             log.warn("Could not connection to the host specified. " + e);
-            httpResponse.sendError(HttpServletResponse.SC_GATEWAY_TIMEOUT);
+            if (!httpResponse.isCommitted()) {
+                httpResponse.sendError(HttpServletResponse.SC_GATEWAY_TIMEOUT);
+            }
             server.setConnectionExceptionRecieved(e);
         } catch (IOException e) {
             log.warn("Problem probably with the input being send, either with a Header or the Stream. " + e);
-            httpResponse.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            if (!httpResponse.isCommitted()) {
+                httpResponse.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            }
         } catch (MethodNotAllowedException e) {
             log.warn("Incoming method could not be handled. " + e);
-            httpResponse.setHeader("Allow", e.getAllowedMethods());
-            httpResponse.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
+            if (!httpResponse.isCommitted()) {
+                httpResponse.setHeader("Allow", e.getAllowedMethods());
+                httpResponse.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
+            }
         } catch (Exception e) {
             log.warn("Problem while connecting to server. " + e);
-            httpResponse.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            if (!httpResponse.isCommitted()) {
+                httpResponse.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            }
             server.setConnectionExceptionRecieved(e);
         } finally {
             if (responseHandler != null) {
