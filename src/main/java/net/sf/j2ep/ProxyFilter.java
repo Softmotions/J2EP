@@ -162,7 +162,7 @@ public class ProxyFilter implements Filter {
             httpResponse.setHeader("Allow", e.getAllowedMethods());
             httpResponse.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
         } catch (Exception e) {
-            log.warn("Problem while connecting to server" + e);
+            log.warn("Problem while connecting to server. " + e);
             httpResponse.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             server.setConnectionExceptionRecieved(e);
         } finally {
