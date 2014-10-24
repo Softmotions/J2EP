@@ -20,7 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.regex.Pattern;
 
 /**
  * A rule that will check the start of the URI for a specifed
@@ -41,6 +40,8 @@ public class DirectoryRule extends BaseRule {
      */
     private String directory;
 
+    private String nslashDirectory;
+
     /**
      * Sets the directory structure that will
      * be mapped to a specified server.
@@ -50,17 +51,22 @@ public class DirectoryRule extends BaseRule {
     public void setDirectory(String directory) {
         if (directory == null) {
             throw new IllegalArgumentException(
-                "The directory string cannot be null.");
-        } else {
-            if (!directory.startsWith("/")) {
-                directory = "/" + directory;
-            }
-            if (!directory.endsWith(("/"))) {
-                directory += "/";
-            }
-            this.directory = directory;
+                    "The directory string cannot be null.");
         }
+        directory = directory.trim();
+        if (!directory.startsWith("/")) {
+            directory = "/" + directory;
+        }
+        if (!directory.endsWith(("/"))) {
+            this.nslashDirectory = directory;
+            directory += "/";
+        }
+        this.directory = directory;
     }
+
+    /*public boolean needRedirect(HttpServletRequest request) {
+        return (nslashDirectory != null) && request.getServletPath().equals(nslashDirectory);
+    }*/
 
     /**
      * Returns the directory structure that
@@ -80,7 +86,7 @@ public class DirectoryRule extends BaseRule {
      */
     public boolean matches(HttpServletRequest request) {
         String uri = request.getServletPath();
-        return (uri.startsWith(directory));
+        return ((nslashDirectory != null && uri.equals(nslashDirectory)) || uri.startsWith(directory));
     }
 
     /**

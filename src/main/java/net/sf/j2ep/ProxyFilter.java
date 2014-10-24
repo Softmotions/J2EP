@@ -24,6 +24,7 @@ import net.sf.j2ep.model.RequestHandler;
 import net.sf.j2ep.model.ResponseHandler;
 import net.sf.j2ep.model.Rule;
 import net.sf.j2ep.model.Server;
+import net.sf.j2ep.rules.DirectoryRule;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -96,6 +97,7 @@ public class ProxyFilter implements Filter {
     public void doFilter(ServletRequest req, ServletResponse resp,
                          FilterChain filterChain) throws IOException, ServletException {
 
+
         HttpServletResponse httpResponse = (HttpServletResponse) resp;
         HttpServletRequest httpRequest = (HttpServletRequest) req;
 
@@ -110,7 +112,7 @@ public class ProxyFilter implements Filter {
 
         String redirect = server.getRedirect();
         if (redirect != null) {
-            ((HttpServletResponse) resp).sendRedirect(redirect);
+            httpResponse.sendRedirect(redirect);
             return;
         }
 
@@ -120,11 +122,20 @@ public class ProxyFilter implements Filter {
             filterChain.doFilter(req, resp);
             return;
         }
-
         String uri = rule.process(getURI(httpRequest));
+        if ((rule instanceof DirectoryRule) && uri.isEmpty()) { //need redirect to slash terminated path
+            String rurl = ((HttpServletRequest) req).getRequestURL().toString();
+            if (!rurl.endsWith("/")) {
+                rurl += '/';
+                if (log.isDebugEnabled()) log.debug("Redirect: " + rurl);
+                httpResponse.setStatus(HttpServletResponse.SC_MOVED_PERMANENTLY);
+                httpResponse.setHeader("Location", rurl);
+                httpResponse.flushBuffer();
+                return;
+            }
+        }
         String url = req.getScheme() + "://" + server.getDomainName() + server.getPath() + uri;
-        //if (log.isDebugEnabled()) log.debug("Connecting to " + url);
-
+        if (log.isDebugEnabled()) log.debug("Connecting to " + url);
         ResponseHandler responseHandler = null;
         try {
 

@@ -153,7 +153,7 @@ public class BaseServer extends ServerContainerBase implements Server {
         if (path == null) {
             this.path = "";
         } else {
-            this.path = path;
+            this.path = path.endsWith("/") ? path.substring(0, path.length() - 1) : path;
         }
     }
 
