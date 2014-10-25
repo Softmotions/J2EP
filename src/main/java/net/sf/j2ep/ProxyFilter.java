@@ -133,9 +133,8 @@ public class ProxyFilter implements Filter {
             return;
         }
 
-
         final Server fServer = server;
-        final AsyncContext actx = req.startAsync();
+        final AsyncContext actx = req.isAsyncStarted() ? req.getAsyncContext() : req.startAsync();
         actx.start(() -> {
             try {
                 runAsync(actx, rule, fServer);
@@ -198,7 +197,10 @@ public class ProxyFilter implements Filter {
                 responseHandler.close();
             }
         }
-        actx.complete();
+        try {
+            actx.complete();
+        } catch (IllegalStateException ignored) {
+        }
     }
 
     /**
