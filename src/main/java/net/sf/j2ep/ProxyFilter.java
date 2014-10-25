@@ -45,12 +45,14 @@ import org.apache.http.protocol.HTTP;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.servlet.AsyncContext;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
+import javax.servlet.annotation.WebFilter;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
@@ -76,6 +78,8 @@ import java.util.Map;
  *
  * @author Anders Nyman
  */
+
+@WebFilter(asyncSupported = true)
 public class ProxyFilter implements Filter {
 
     /**
@@ -104,8 +108,8 @@ public class ProxyFilter implements Filter {
                          FilterChain filterChain) throws IOException, ServletException {
 
 
-        HttpServletResponse httpResponse = (HttpServletResponse) resp;
-        HttpServletRequest httpRequest = (HttpServletRequest) req;
+        final HttpServletResponse httpResponse = (HttpServletResponse) resp;
+        final HttpServletRequest httpRequest = (HttpServletRequest) req;
 
         Server server = (Server) httpRequest.getAttribute("proxyServer");
         if (server == null) {
@@ -122,15 +126,31 @@ public class ProxyFilter implements Filter {
             return;
         }
 
-        Rule rule = server.getRule();
+        final Rule rule = server.getRule();
         if (rule == null) {
             log.warn("No proxy rule for: " + server);
             filterChain.doFilter(req, resp);
             return;
         }
+
+
+        final Server fServer = server;
+        final AsyncContext actx = req.startAsync();
+        actx.start(() -> {
+            try {
+                runAsync(actx, rule, fServer);
+            } catch (IOException | ServletException e) {
+                log.error("", e);
+            }
+        });
+    }
+
+    private void runAsync(AsyncContext actx, Rule rule, Server server) throws IOException, ServletException {
+        HttpServletRequest httpRequest = (HttpServletRequest) actx.getRequest();
+        HttpServletResponse httpResponse = (HttpServletResponse) actx.getResponse();
         String uri = rule.process(getURI(httpRequest));
         if ((rule instanceof DirectoryRule) && uri.isEmpty()) { //need redirect to slash terminated path
-            String rurl = ((HttpServletRequest) req).getRequestURL().toString();
+            String rurl = httpRequest.getRequestURL().toString();
             if (!rurl.endsWith("/")) {
                 rurl += '/';
                 if (log.isDebugEnabled()) log.debug("Redirect: " + rurl);
@@ -140,7 +160,7 @@ public class ProxyFilter implements Filter {
                 return;
             }
         }
-        String url = req.getScheme() + "://" + server.getDomainName() + server.getPath() + uri;
+        String url = httpRequest.getScheme() + "://" + server.getDomainName() + server.getPath() + uri;
         if (log.isDebugEnabled()) log.debug("Connecting to " + url);
         ResponseHandler responseHandler = null;
         try {
@@ -178,6 +198,7 @@ public class ProxyFilter implements Filter {
                 responseHandler.close();
             }
         }
+        actx.complete();
     }
 
     /**
