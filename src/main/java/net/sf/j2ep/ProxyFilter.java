@@ -140,6 +140,11 @@ public class ProxyFilter implements Filter {
                 runAsync(actx, rule, fServer);
             } catch (IOException | ServletException e) {
                 log.error("", e);
+            } finally {
+                try {
+                    actx.complete();
+                } catch (IllegalStateException ignored) {
+                }
             }
         });
     }
@@ -196,10 +201,6 @@ public class ProxyFilter implements Filter {
             if (responseHandler != null) {
                 responseHandler.close();
             }
-        }
-        try {
-            actx.complete();
-        } catch (IllegalStateException ignored) {
         }
     }
 
