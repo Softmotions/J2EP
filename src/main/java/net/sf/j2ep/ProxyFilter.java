@@ -138,6 +138,7 @@ public class ProxyFilter implements Filter {
         actx.start(() -> {
             try {
                 runAsync(actx, rule, fServer);
+            } catch (IllegalStateException ignored) {
             } catch (IOException | ServletException e) {
                 log.error("", e);
             } finally {
