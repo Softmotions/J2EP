@@ -81,7 +81,6 @@ public class OptionsResponseHandler extends ResponseHandlerBase {
                 response.setHeader("Content-Length", "0");
             } else {
                 try {
-                    response.setHeader("Content-Length", contentLength.getValue());
                     sendStreamToClient(response);
                 } catch (IOException e) {
                     log.error("Problem with writing response stream, solving by setting Content-Length=0", e);
