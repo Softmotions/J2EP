@@ -33,6 +33,7 @@ public class GetResponseHandler extends BasicResponseHandler {
      */
     public GetResponseHandler(CloseableHttpResponse resp) {
         super(resp);
+        allowCopyLengthHeader = true;
     }
 
 }

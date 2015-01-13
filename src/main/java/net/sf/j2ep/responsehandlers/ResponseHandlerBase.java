@@ -50,6 +50,8 @@ public abstract class ResponseHandlerBase implements ResponseHandler {
      */
     protected CloseableHttpResponse hresp;
 
+    protected boolean allowCopyLengthHeader = false;
+
     /**
      * Basic constructor only setting the method.
      *
@@ -120,7 +122,7 @@ public abstract class ResponseHandlerBase implements ResponseHandler {
             String name = header.getName();
             boolean contentLength = name.equalsIgnoreCase("content-length");
             boolean connection = name.equalsIgnoreCase("connection");
-            if (!contentLength && !connection) {
+            if ((!contentLength || allowCopyLengthHeader) && !connection) {
                 response.addHeader(name, header.getValue());
             }
         }
